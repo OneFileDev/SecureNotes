@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SecureNotes</title>
+
+<!-- Tiny inline theme-preload script: runs before CSS paints so returning users
+     don't see a flash of the wrong theme while the main script loads below. -->
+<script>
+(function () {
+  try {
+    var raw = localStorage.getItem('secureNotesVault');
+    if (raw) {
+      var data = JSON.parse(raw);
+      if (data && data.settings && data.settings.theme) {
+        document.documentElement.setAttribute('data-theme', data.settings.theme);
+      }
+    }
+  } catch (e) { /* ignore - main script will fall back to 'auto' */ }
+})();
+</script>
+
+<style>
+  /* ============================== THEME TOKENS ============================== */
+  :root {
+    --accent: #4f6df5;
+    --accent-hover: #3f5ce0;
+    --accent-contrast: #ffffff;
+    --danger: #e5484d;
+    --danger-hover: #d33c41;
+    --success: #2fa365;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  /* Light (default / fallback) */
+  :root, [data-theme="light"] {
+    --bg: #f4f5f9;
+    --bg-elevated: #ffffff;
+    --bg-hover: #eceefa;
+    --bg-input: #ffffff;
+    --text: #1a1c26;
+    --text-muted: #676d7e;
+    --border: #e0e2ec;
+    --shadow: rgba(20, 22, 40, 0.07);
+  }
+
+  [data-theme="dark"] {
+    --bg: #14151c;
+    --bg-elevated: #1c1e28;
+    --bg-hover: #262838;
+    --bg-input: #20222d;
+    --text: #eceef4;
+    --text-muted: #9599ac;
+    --border: #2b2d3a;
+    --shadow: rgba(0, 0, 0, 0.35);
+  }
+
+  [data-theme="amoled"] {
+    --bg: #000000;
+    --bg-elevated: #070708;
+    --bg-hover: #131315;
+    --bg-input: #0c0c0d;
+    --text: #eaeaea;
+    --text-muted: #8d8d8d;
+    --border: #1c1c1e;
+    --shadow: rgba(0, 0, 0, 0.6);
+  }
+
+  /* Auto: mirror light by default, swap to dark values by OS preference */
+  [data-theme="auto"] {
+    --bg: #f4f5f9;
+    --bg-elevated: #ffffff;
+    --bg-hover: #eceefa;
+    --bg-input: #ffffff;
+    --text: #1a1c26;
+    --text-muted: #676d7e;
+    --border: #e0e2ec;
+    --shadow: rgba(20, 22, 40, 0.07);
+  }
+  @media (prefers-color-scheme: dark) {
+    [data-theme="auto"] {
+      --bg: #14151c;
+      --bg-elevated: #1c1e28;
+      --bg-hover: #262838;
+      --bg-input: #20222d;
+      --text: #eceef4;
+      --text-muted: #9599ac;
+      --border: #2b2d3a;
+      --shadow: rgba(0, 0, 0, 0.35);
+    }
+  }
+
+  /* ============================== RESET / BASE ============================== */
+  * { box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+  button, input, textarea {
+    font-family: inherit;
+    color: inherit;
+  }
+  button {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .hidden { display: none !important; }
+
+  #root {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ============================== HEADER ============================== */
+  .app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 18px;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    z-index: 20;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+  .brand-icon { font-size: 20px; line-height: 1; }
+  .brand-name {
+    font-weight: 700;
+    font-size: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .version-badge {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    border-radius: 999px;
+    padding: 2px 8px;
+    white-space: nowrap;
+  }
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* Theme toggle: compact icon row (used in header) and larger labeled row (settings) */
+  .theme-toggle {
+    display: flex;
+    gap: 2px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 2px;
+  }
+  .theme-toggle button {
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    border-radius: calc(var(--radius-sm) - 2px);
+    padding: 5px 8px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.12s ease, color 0.12s ease;
+  }
+  .theme-toggle button:hover { background: var(--bg-hover); color: var(--text); }
+  .theme-toggle button.active { background: var(--accent); color: var(--accent-contrast); }
+  .theme-toggle-large button { padding: 8px 12px; font-size: 14px; }
+  .theme-toggle-large .toggle-label { display: inline; }
+  .theme-toggle:not(.theme-toggle-large) .toggle-label { display: none; }
+
+  /* ============================== BUTTONS ============================== */
+  .btn {
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    padding: 9px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    background: var(--bg);
+    color: var(--text);
+    border-color: var(--border);
+    transition: background-color 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
+    white-space: nowrap;
+  }
+  .btn:hover { background: var(--bg-hover); }
+  .btn:disabled { opacity: 0.6; cursor: default; }
+  .btn-accent { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+  .btn-accent:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .btn-outline { background: transparent; border-color: var(--border); color: var(--text); }
+  .btn-ghost { background: transparent; border-color: transparent; color: var(--text-muted); }
+  .btn-ghost:hover { background: var(--bg-hover); color: var(--text); }
+  .btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+  .btn-danger:hover { background: var(--danger-hover); border-color: var(--danger-hover); }
+  .btn-danger-ghost { background: transparent; border-color: transparent; color: var(--danger); }
+  .btn-danger-ghost:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); }
+  .btn-block { width: 100%; }
+
+  input[type="text"], input[type="password"], input[type="search"], input[type="number"], textarea {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    font-size: 14px;
+    color: var(--text);
+    width: 100%;
+  }
+  input::placeholder, textarea::placeholder { color: var(--text-muted); }
+
+  /* ============================== BODY / LAYOUT ============================== */
+  .body-area {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    display: flex;
+  }
+
+  /* ---------- Locked screen ---------- */
+  .locked-screen {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    overflow-y: auto;
+  }
+  .locked-card {
+    max-width: 420px;
+    width: 100%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px 28px;
+    box-shadow: 0 8px 30px var(--shadow);
+    text-align: center;
+  }
+  .locked-icon { font-size: 34px; margin-bottom: 6px; }
+  .locked-card h1 { font-size: 20px; margin: 4px 0 6px; }
+  .locked-card .muted { color: var(--text-muted); font-size: 13.5px; margin: 0 0 18px; line-height: 1.5; }
+  .locked-card form { display: flex; flex-direction: column; gap: 10px; text-align: left; }
+  .disclaimer {
+    margin: 22px 0 0;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    text-align: left;
+  }
+
+  /* ---------- App shell ---------- */
+  .app-shell {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+    width: 100%;
+  }
+  .sidebar {
+    width: 190px;
+    flex-shrink: 0;
+    background: var(--bg-elevated);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 14px 10px;
+  }
+  .nav-tab {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 600;
+    text-align: left;
+  }
+  .nav-tab .icon { font-size: 16px; width: 18px; text-align: center; }
+  .nav-tab:hover { background: var(--bg-hover); color: var(--text); }
+  .nav-tab.active { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+
+  .content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .view { flex: 1; min-height: 0; display: flex; overflow: hidden; }
+  .view[hidden] { display: none; }
+
+  /* ---------- Notes view ---------- */
+  .notes-view { flex-direction: row; }
+  .notes-list-pane {
+    width: 300px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .list-toolbar {
+    display: flex;
+    gap: 8px;
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .list-toolbar input[type="search"] { flex: 1; }
+  .notes-list {
+    list-style: none;
+    margin: 0;
+    padding: 6px;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .note-item {
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    margin-bottom: 2px;
+  }
+  .note-item:hover { background: var(--bg-hover); }
+  .note-item.active { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+  .note-item.corrupted .note-item-title { color: var(--danger); }
+  .note-item-title { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .note-item-snippet { font-size: 12.5px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; }
+  .note-item-time { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+  .empty-state {
+    padding: 30px 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13.5px;
+  }
+  .empty-state .btn { margin-top: 12px; }
+
+  .editor-pane { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; }
+  .editor-placeholder {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 14px;
+    text-align: center;
+    padding: 24px;
+  }
+  .editor-content { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 14px 20px 20px; }
+  .editor-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .back-btn { display: none; }
+  .save-indicator {
+    flex: 1;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    transition: color 0.15s ease;
+  }
+  .save-indicator.saving { color: var(--text-muted); }
+  .save-indicator.saved { color: var(--success); }
+  .save-indicator.error { color: var(--danger); }
+  .note-title-input {
+    border: none;
+    background: transparent;
+    font-size: 20px;
+    font-weight: 700;
+    padding: 6px 2px;
+    margin-bottom: 4px;
+  }
+  .note-title-input:focus { outline: none; }
+  .note-body-input {
+    flex: 1;
+    resize: none;
+    border: none;
+    background: transparent;
+    font-size: 14.5px;
+    line-height: 1.65;
+    padding: 6px 2px;
+  }
+  .note-body-input:focus { outline: none; }
+
+  /* ---------- Generic panel views (Backup / Settings / About) ---------- */
+  .content > .view:not(.notes-view) { flex-direction: column; overflow-y: auto; padding: 24px 28px; gap: 16px; }
+  .panel {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    max-width: 640px;
+  }
+  .panel h2 { font-size: 15.5px; margin: 0 0 6px; }
+  .panel h3 { font-size: 14px; margin: 18px 0 6px; }
+  .panel .muted { color: var(--text-muted); font-size: 13.5px; line-height: 1.55; margin: 0 0 14px; }
+  .panel .hint { color: var(--text-muted); font-size: 12px; margin: 6px 0 0; }
+  .panel label { font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px; }
+  #change-password-form { display: flex; flex-direction: column; gap: 10px; max-width: 320px; }
+  #autolock-input { max-width: 120px; }
+  .danger-zone { border-color: color-mix(in srgb, var(--danger) 40%, var(--border)); }
+  .danger-zone h2 { color: var(--danger); }
+  .status-msg { font-size: 13px; margin-top: 10px; min-height: 1.2em; }
+  .status-msg.status-error { color: var(--danger); }
+  .status-msg.status-success { color: var(--success); }
+  #import-file-input { margin-bottom: 10px; font-size: 13px; }
+
+  .about-panel { max-width: 620px; }
+  .changelog { margin: 0; padding-left: 18px; font-size: 13.5px; line-height: 1.7; color: var(--text); }
+  .changelog li { margin-bottom: 6px; }
+  .built-by { margin-top: 20px; font-size: 13px; color: var(--text-muted); }
+  .built-by a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .built-by a:hover { text-decoration: underline; }
+
+  /* ============================== RESPONSIVE ============================== */
+  @media (max-width: 860px) {
+    .notes-list-pane { width: 240px; }
+  }
+
+  @media (max-width: 768px) {
+    .app-shell { flex-direction: column; }
+    .sidebar {
+      width: 100%;
+      flex-direction: row;
+      justify-content: space-around;
+      border-right: none;
+      border-top: 1px solid var(--border);
+      order: 2;
+      padding: 6px 4px;
+      gap: 0;
+    }
+    .nav-tab { flex-direction: column; gap: 2px; font-size: 10.5px; padding: 6px 4px; flex: 1; }
+    .nav-tab .icon { font-size: 18px; }
+    .content { order: 1; }
+
+    .notes-view { position: relative; }
+    .notes-view .notes-list-pane { display: flex; width: 100%; border-right: none; }
+    .notes-view .editor-pane { display: none; }
+    .notes-view.mobile-show-editor .notes-list-pane { display: none; }
+    .notes-view.mobile-show-editor .editor-pane { display: flex; }
+    .back-btn { display: inline-flex !important; }
+
+    .brand-name { display: none; }
+    .theme-toggle .toggle-label { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+  <div id="root">
+
+    <!-- ============================== HEADER ============================== -->
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-icon">🔒</span>
+        <span class="brand-name">SecureNotes</span>
+        <span class="version-badge">v1.0.0</span>
+      </div>
+      <div class="header-actions">
+        <div class="theme-toggle" id="theme-toggle-header">
+          <button type="button" data-theme-choice="auto" title="Auto (match system)">🖥️<span class="toggle-label">Auto</span></button>
+          <button type="button" data-theme-choice="light" title="Light">☀️<span class="toggle-label">Light</span></button>
+          <button type="button" data-theme-choice="dark" title="Dark">🌙<span class="toggle-label">Dark</span></button>
+          <button type="button" data-theme-choice="amoled" title="AMOLED">⚫<span class="toggle-label">AMOLED</span></button>
+        </div>
+        <button type="button" id="lock-btn" class="btn btn-outline hidden">🔒 Lock</button>
+      </div>
+    </header>
+
+    <div class="body-area">
+
+      <!-- ============================== LOCKED SCREEN ============================== -->
+      <section id="locked-screen" class="locked-screen">
+        <div class="locked-card">
+          <div class="locked-icon">🔒</div>
+
+          <!-- First launch: create master password -->
+          <div id="locked-setup" hidden>
+            <h1>Welcome to SecureNotes</h1>
+            <p class="muted">Create a master password to encrypt your notes on this device. Choose something memorable — there is no way to recover it if it's lost.</p>
+            <form id="setup-form">
+              <input type="password" id="setup-password-input" placeholder="Master password (min 8 characters)" aria-label="Master password" autocomplete="new-password" minlength="8" required>
+              <input type="password" id="setup-confirm-input" placeholder="Confirm master password" aria-label="Confirm master password" autocomplete="new-password" minlength="8" required>
+              <button type="submit" class="btn btn-accent btn-block">Create password &amp; continue</button>
+            </form>
+            <p id="setup-status" class="status-msg"></p>
+          </div>
+
+          <!-- Returning visit: unlock -->
+          <div id="locked-unlock" hidden>
+            <h1>Welcome back</h1>
+            <p class="muted">Enter your master password to unlock your notes.</p>
+            <form id="unlock-form">
+              <input type="password" id="unlock-password-input" placeholder="Master password" aria-label="Master password" autocomplete="current-password" required>
+              <button type="submit" class="btn btn-accent btn-block">Unlock</button>
+            </form>
+            <p id="unlock-status" class="status-msg"></p>
+          </div>
+
+          <!-- Corrupted / tampered data -->
+          <div id="locked-corrupted" hidden>
+            <h1>Data problem detected</h1>
+            <p class="muted">SecureNotes couldn't read its stored data on this device — it may be corrupted, tampered with, or from an incompatible version. Your notes cannot be recovered from a corrupted store.</p>
+            <button type="button" id="corrupted-reset-btn" class="btn btn-danger btn-block">Erase &amp; start fresh</button>
+          </div>
+
+          <p class="disclaimer">
+            🔐 Notes are encrypted locally in your browser (AES-256-GCM) and never leave this device. This gives solid protection for personal, local use — it is not a substitute for enterprise-grade security. There is no backdoor: if you forget your master password, your notes cannot be recovered by anyone, including the developer.
+          </p>
+        </div>
+      </section>
+
+      <!-- ============================== APP SHELL (unlocked) ============================== -->
+      <div id="app-shell" class="app-shell hidden">
+        <nav class="sidebar">
+          <button type="button" class="nav-tab active" data-tab="notes"><span class="icon">📝</span><span class="label">Notes</span></button>
+          <button type="button" class="nav-tab" data-tab="backup"><span class="icon">📦</span><span class="label">Backup</span></button>
+          <button type="button" class="nav-tab" data-tab="settings"><span class="icon">⚙️</span><span class="label">Settings</span></button>
+          <button type="button" class="nav-tab" data-tab="about"><span class="icon">ℹ️</span><span class="label">About</span></button>
+        </nav>
+
+        <div class="content">
+
+          <!-- ---------- Notes ---------- -->
+          <section class="view notes-view" data-view="notes">
+            <div class="notes-list-pane">
+              <div class="list-toolbar">
+                <input type="search" id="search-input" placeholder="Search notes…" aria-label="Search notes">
+                <button type="button" id="new-note-btn" class="btn btn-accent" title="New note">+ New</button>
+              </div>
+              <ul class="notes-list" id="notes-list"></ul>
+              <p class="empty-state" id="notes-empty-state" hidden>
+                No notes yet.<br>
+                <button type="button" class="btn btn-accent" id="empty-new-note-btn">Create your first note</button>
+              </p>
+              <p class="empty-state" id="no-results-msg" hidden>No notes match your search.</p>
+            </div>
+            <div class="editor-pane">
+              <div class="editor-placeholder" id="editor-placeholder">
+                <p>Select a note, or create a new one, to start writing.</p>
+              </div>
+              <div class="editor-content hidden" id="editor-content">
+                <div class="editor-toolbar">
+                  <button type="button" class="btn btn-ghost back-btn" id="back-to-list-btn">← Back</button>
+                  <span class="save-indicator" id="save-indicator"></span>
+                  <button type="button" class="btn btn-danger-ghost" id="delete-note-btn">Delete</button>
+                </div>
+                <input type="text" id="note-title-input" class="note-title-input" placeholder="Untitled note" aria-label="Note title" maxlength="300">
+                <textarea id="note-body-input" class="note-body-input" placeholder="Start typing…"></textarea>
+              </div>
+            </div>
+          </section>
+
+          <!-- ---------- Backup ---------- -->
+          <section class="view" data-view="backup" hidden>
+            <div class="panel">
+              <h2>Export encrypted backup</h2>
+              <p class="muted">Download a copy of your notes exactly as they're stored — still fully encrypted. Keep it somewhere safe; you'll need the master password that's active right now to restore it later.</p>
+              <button type="button" id="export-btn" class="btn btn-accent">⬇ Export encrypted backup</button>
+            </div>
+            <div class="panel">
+              <h2>Import backup</h2>
+              <p class="muted">Restoring a backup replaces every note currently stored in this browser. This can't be undone, and you'll need the password that was active when that backup was made.</p>
+              <input type="file" id="import-file-input" accept="application/json">
+              <br>
+              <button type="button" id="import-btn" class="btn btn-outline">⬆ Import backup</button>
+              <p id="import-status" class="status-msg"></p>
+            </div>
+          </section>
+
+          <!-- ---------- Settings ---------- -->
+          <section class="view" data-view="settings" hidden>
+            <div class="panel">
+              <h2>Appearance</h2>
+              <div class="theme-toggle theme-toggle-large" id="theme-toggle-settings">
+                <button type="button" data-theme-choice="auto">🖥️<span class="toggle-label">Auto</span></button>
+                <button type="button" data-theme-choice="light">☀️<span class="toggle-label">Light</span></button>
+                <button type="button" data-theme-choice="dark">🌙<span class="toggle-label">Dark</span></button>
+                <button type="button" data-theme-choice="amoled">⚫<span class="toggle-label">AMOLED</span></button>
+              </div>
+            </div>
+            <div class="panel">
+              <h2>Auto-lock</h2>
+              <label for="autolock-input">Lock automatically after this many minutes of inactivity</label>
+              <input type="number" id="autolock-input" min="1" max="120" step="1">
+              <p class="hint">Between 1 and 120 minutes. Applies the next time the app is idle.</p>
+            </div>
+            <div class="panel">
+              <h2>Change master password</h2>
+              <p class="muted">Re-encrypts all of your notes with the new password.</p>
+              <form id="change-password-form">
+                <input type="password" id="current-password-input" placeholder="Current password" aria-label="Current password" autocomplete="current-password" required>
+                <input type="password" id="new-password-input" placeholder="New password (min 8 characters)" aria-label="New password" autocomplete="new-password" minlength="8" required>
+                <input type="password" id="confirm-new-password-input" placeholder="Confirm new password" aria-label="Confirm new password" autocomplete="new-password" minlength="8" required>
+                <button type="submit" class="btn btn-accent">Update password</button>
+              </form>
+              <p id="change-password-status" class="status-msg"></p>
+            </div>
+            <div class="panel danger-zone">
+              <h2>Danger zone</h2>
+              <p class="muted">Permanently erase all notes and reset SecureNotes on this device. This cannot be undone.</p>
+              <button type="button" id="reset-app-btn" class="btn btn-danger">Erase all data</button>
+            </div>
+          </section>
+
+          <!-- ---------- About ---------- -->
+          <section class="view" data-view="about" hidden>
+            <div class="panel about-panel">
+              <h2>SecureNotes <span class="version-badge">v1.0.0</span></h2>
+              <p class="muted">Private, password-protected notes, encrypted entirely in your browser.</p>
+
+              <h3>Changelog</h3>
+              <ul class="changelog">
+                <li><strong>v1.0.0</strong> — Initial release: master-password gate, AES-256-GCM encrypted notes with PBKDF2 key derivation, autosave, configurable auto-lock, encrypted backup/restore, and Auto/Light/Dark/AMOLED themes.</li>
+              </ul>
+
+              <h3>A note on security</h3>
+              <p class="muted">SecureNotes encrypts everything locally using your browser's built-in Web Crypto API (PBKDF2 + AES-256-GCM) — nothing is ever sent anywhere. It's built for personal, local use: a convenient way to keep casual notes private on your own device. It is not a substitute for enterprise-grade security tools, and it has no password-recovery mechanism or backdoor of any kind. If you forget your master password, your notes cannot be recovered — by anyone, including the developer.</p>
+
+              <p class="built-by">Built by <a href="https://github.com/OneFileDev" target="_blank" rel="noopener noreferrer">OneFileDev</a></p>
+            </div>
+          </section>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ==========================================================================
+     SecureNotes — client-side encrypted notes
+     ------------------------------------------------------------------------
+     Everything below runs entirely in the browser. No network requests are
+     ever made. All cryptography uses the browser's native SubtleCrypto
+     (Web Crypto API) — no third-party crypto libraries.
+     ========================================================================== */
+
+  // Fail loudly (but gracefully) if the browser lacks the Web Crypto API,
+  // rather than letting cryptic errors surface later.
+  if (!window.crypto || !window.crypto.subtle) {
+    document.body.innerHTML =
+      '<div style="padding:40px;font-family:system-ui,sans-serif;max-width:520px;margin:40px auto;">' +
+      '<h2>Browser not supported</h2>' +
+      '<p>SecureNotes needs the Web Crypto API, which this browser (or this page context) does not provide. ' +
+      'Please open this file in an up-to-date version of Chrome, Firefox, Edge, or Safari.</p></div>';
+    return;
+  }
+
+  /* ============================== CONSTANTS ============================== */
+
+  var STORAGE_KEY = 'secureNotesVault';
+  var DATA_VERSION = 1;              // Bump + add a migration step in migrateVault() if the schema ever changes.
+  var PBKDF2_ITERATIONS = 600000;    // Comfortably above the 550,000 floor.
+  var VERIFIER_CHECK_VALUE = 'secure-notes-verify-v1';
+
+  /* ============================== BASE64 <-> ArrayBuffer HELPERS ==============================
+     localStorage only stores strings, so binary crypto material (salts, IVs,
+     ciphertext) is base64-encoded before it's persisted. */
+
+  function bufToBase64(buf) {
+    var bytes = new Uint8Array(buf);
+    var binary = '';
+    for (var i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+    return btoa(binary);
+  }
+  function base64ToBuf(b64) {
+    var binary = atob(b64);
+    var bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes.buffer;
+  }
+
+  function generateId() {
+    if (window.crypto.randomUUID) return window.crypto.randomUUID();
+    // Fallback UUID v4 generator built from CSPRNG bytes, for older browsers.
+    var b = window.crypto.getRandomValues(new Uint8Array(16));
+    b[6] = (b[6] & 0x0f) | 0x40;
+    b[8] = (b[8] & 0x3f) | 0x80;
+    var hex = Array.prototype.map.call(b, function (x) { return x.toString(16).padStart(2, '0'); }).join('');
+    return hex.slice(0, 8) + '-' + hex.slice(8, 12) + '-' + hex.slice(12, 16) + '-' + hex.slice(16, 20) + '-' + hex.slice(20);
+  }
+
+  /* ==========================================================================
+     CRYPTO SERVICE
+     ------------------------------------------------------------------------
+     Key derivation: PBKDF2-SHA256 is the strongest password-based KDF that
+     SubtleCrypto natively exposes (browsers don't yet ship Argon2/scrypt
+     without a third-party library, which this app deliberately avoids), so
+     we lean on a high iteration count instead.
+
+     Encryption: AES-256-GCM, an authenticated cipher — every encrypt call
+     gets a fresh random 96-bit IV, and decryption fails (throws) if the key
+     is wrong OR the ciphertext was tampered with. We rely on that single
+     failure mode everywhere: a wrong password and corrupted data look
+     identical from the outside, so no information is leaked either way.
+
+     The derived AES key is created as non-extractable, so raw key bytes
+     can never be pulled back out of it even from within this page's own
+     JS — only encrypt/decrypt operations are possible with it.
+     ========================================================================== */
+
+  var CryptoService = {
+    generateSalt: function () { return window.crypto.getRandomValues(new Uint8Array(16)); },
+    generateIV: function () { return window.crypto.getRandomValues(new Uint8Array(12)); },
+
+    deriveKey: function (password, saltBytes, iterations) {
+      iterations = iterations || PBKDF2_ITERATIONS;
+      var enc = new TextEncoder();
+      return window.crypto.subtle.importKey(
+        'raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveKey']
+      ).then(function (baseKey) {
+        return window.crypto.subtle.deriveKey(
+          { name: 'PBKDF2', salt: saltBytes, iterations: iterations, hash: 'SHA-256' },
+          baseKey,
+          { name: 'AES-GCM', length: 256 },
+          false,               // not extractable — raw bytes can never leave SubtleCrypto
+          ['encrypt', 'decrypt']
+        );
+      });
+    },
+
+    // Encrypts a plain JS object. Returns base64 iv + ciphertext, ready to persist.
+    encryptJSON: function (key, obj) {
+      var iv = this.generateIV();
+      var data = new TextEncoder().encode(JSON.stringify(obj));
+      return window.crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, data).then(function (buf) {
+        return { iv: bufToBase64(iv), ciphertext: bufToBase64(buf) };
+      });
+    },
+
+    // Decrypts back to a plain JS object. Throws (OperationError) on wrong
+    // key or tampered ciphertext — callers catch this generically.
+    decryptJSON: function (key, ivB64, ciphertextB64) {
+      var iv = base64ToBuf(ivB64);
+      var ct = base64ToBuf(ciphertextB64);
+      return window.crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, ct).then(function (buf) {
+        return JSON.parse(new TextDecoder().decode(buf));
+      });
+    }
+  };
+
+  /* ==========================================================================
+     STORAGE SERVICE
+     ------------------------------------------------------------------------
+     Storage choice: localStorage. Notes here are small-to-medium blocks of
+     text and the whole app is single-user/single-device, so we don't need
+     IndexedDB's async transactions or larger storage ceiling — localStorage's
+     simple synchronous get/set keeps the code straightforward, and 5-10MB
+     of headroom is generous for personal note-taking. (If this app ever
+     needed to store large attachments, IndexedDB would be the better choice.)
+
+     Only ciphertext, IVs, and the KDF salt are ever written here — never a
+     plaintext password or plaintext note body.
+     ========================================================================== */
+
+  var StorageService = {
+    load: function () {
+      var raw;
+      try { raw = localStorage.getItem(STORAGE_KEY); }
+      catch (e) { return { ok: false, reason: 'corrupted' }; }
+      if (raw === null) return { ok: false, reason: 'missing' };
+
+      var data;
+      try { data = JSON.parse(raw); }
+      catch (e) { return { ok: false, reason: 'corrupted' }; }
+
+      if (!isValidVaultShape(data)) return { ok: false, reason: 'corrupted' };
+      return { ok: true, data: migrateVault(data) };
+    },
+    save: function (vaultObj) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(vaultObj));
+    },
+    clear: function () {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  };
+
+  // Structural validation — catches corruption/tampering at the shape level.
+  // (Corruption inside an individual note's ciphertext is instead caught at
+  // decrypt time, per-note, so one bad note can't take down the whole app.)
+  function isValidVaultShape(data) {
+    if (!data || typeof data !== 'object') return false;
+    if (typeof data.version !== 'number') return false;
+    if (!data.kdf || typeof data.kdf.salt !== 'string' || typeof data.kdf.iterations !== 'number') return false;
+    if (!data.verifier || typeof data.verifier.iv !== 'string' || typeof data.verifier.ciphertext !== 'string') return false;
+    if (!Array.isArray(data.notes)) return false;
+    for (var i = 0; i < data.notes.length; i++) {
+      var n = data.notes[i];
+      if (!n || typeof n.id !== 'string' || typeof n.iv !== 'string' || typeof n.ciphertext !== 'string') return false;
+    }
+    if (!data.settings || typeof data.settings !== 'object') return false;
+    return true;
+  }
+
+  // Schema is versioned so a future release can transform older data safely
+  // without breaking existing installs. Only v1 exists today.
+  function migrateVault(data) {
+    if (data.version === DATA_VERSION) return data;
+    // Example for later: if (data.version === 1) { ...transform...; data.version = 2; }
+    return data;
+  }
+
+  /* ============================== APP STATE ============================== */
+  // Everything decrypted lives only here, in memory, for as long as the app
+  // is unlocked. lockApp() below wipes all of it.
+
+  var state = {
+    unlocked: false,
+    cryptoKey: null,           // CryptoKey — non-extractable, cleared on lock
+    vaultMeta: null,           // { kdf, verifier } for the currently active password
+    notes: [],                 // decrypted: [{ id, title, body, createdAt, updatedAt, _corrupted? }]
+    activeNoteId: null,
+    searchQuery: '',
+    settings: { autoLockMinutes: 5, theme: 'auto' },
+    dirty: false,
+    saveTimer: null,
+    autoLockTimeoutId: null
+  };
+
+  // Mirrors exactly what's persisted per note: id -> { iv, ciphertext }.
+  // Lets us re-encrypt only the note that actually changed, instead of
+  // every note, on every autosave.
+  var encryptedCache = {};
+
+  // id -> <li> element, so the notes list can be updated in place instead
+  // of being fully rebuilt on every keystroke.
+  var noteElements = {};
+
+  /* ============================== DOM REFERENCES ============================== */
+
+  var lockedScreenEl = document.getElementById('locked-screen');
+  var setupSectionEl = document.getElementById('locked-setup');
+  var unlockSectionEl = document.getElementById('locked-unlock');
+  var corruptedSectionEl = document.getElementById('locked-corrupted');
+  var setupForm = document.getElementById('setup-form');
+  var setupPasswordInput = document.getElementById('setup-password-input');
+  var setupConfirmInput = document.getElementById('setup-confirm-input');
+  var setupStatusEl = document.getElementById('setup-status');
+  var unlockForm = document.getElementById('unlock-form');
+  var unlockPasswordInput = document.getElementById('unlock-password-input');
+  var unlockStatusEl = document.getElementById('unlock-status');
+  var corruptedResetBtn = document.getElementById('corrupted-reset-btn');
+
+  var appShellEl = document.getElementById('app-shell');
+  var lockBtnEl = document.getElementById('lock-btn');
+  var navTabs = document.querySelectorAll('.nav-tab');
+  var notesViewEl = document.querySelector('[data-view="notes"]');
+
+  var searchInput = document.getElementById('search-input');
+  var newNoteBtn = document.getElementById('new-note-btn');
+  var emptyNewNoteBtn = document.getElementById('empty-new-note-btn');
+  var notesListEl = document.getElementById('notes-list');
+  var notesEmptyStateEl = document.getElementById('notes-empty-state');
+  var noResultsEl = document.getElementById('no-results-msg');
+
+  var editorPlaceholderEl = document.getElementById('editor-placeholder');
+  var editorContentEl = document.getElementById('editor-content');
+  var backToListBtn = document.getElementById('back-to-list-btn');
+  var saveIndicatorEl = document.getElementById('save-indicator');
+  var deleteNoteBtn = document.getElementById('delete-note-btn');
+  var noteTitleInput = document.getElementById('note-title-input');
+  var noteBodyInput = document.getElementById('note-body-input');
+
+  var exportBtn = document.getElementById('export-btn');
+  var importFileInput = document.getElementById('import-file-input');
+  var importBtn = document.getElementById('import-btn');
+  var importStatusEl = document.getElementById('import-status');
+
+  var autolockInput = document.getElementById('autolock-input');
+  var changePasswordForm = document.getElementById('change-password-form');
+  var currentPasswordInput = document.getElementById('current-password-input');
+  var newPasswordInput = document.getElementById('new-password-input');
+  var confirmNewPasswordInput = document.getElementById('confirm-new-password-input');
+  var changePasswordStatusEl = document.getElementById('change-password-status');
+  var resetAppBtn = document.getElementById('reset-app-btn');
+
+  /* ============================== SMALL HELPERS ============================== */
+
+  function showStatus(el, msg, kind) {
+    el.textContent = msg;
+    el.className = 'status-msg' + (kind ? ' status-' + kind : '');
+  }
+
+  function setSubmitBusy(formEl, busy, busyText) {
+    var btn = formEl.querySelector('button[type="submit"]');
+    if (!btn) return;
+    if (busy) {
+      btn.dataset.originalText = btn.textContent;
+      btn.textContent = busyText || 'Please wait…';
+      btn.disabled = true;
+    } else {
+      btn.textContent = btn.dataset.originalText || btn.textContent;
+      btn.disabled = false;
+    }
+  }
+
+  function snippet(text, len) {
+    len = len || 90;
+    var clean = (text || '').replace(/\s+/g, ' ').trim();
+    return clean.length > len ? clean.slice(0, len) + '…' : clean;
+  }
+
+  function formatRelativeTime(ts) {
+    if (!ts) return '';
+    var diff = Date.now() - ts;
+    var sec = Math.floor(diff / 1000);
+    if (sec < 45) return 'just now';
+    var min = Math.floor(sec / 60);
+    if (min < 60) return min + 'm ago';
+    var hr = Math.floor(min / 60);
+    if (hr < 24) return hr + 'h ago';
+    var day = Math.floor(hr / 24);
+    if (day < 7) return day + 'd ago';
+    return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }
+
+  function findNote(id) {
+    for (var i = 0; i < state.notes.length; i++) if (state.notes[i].id === id) return state.notes[i];
+    return null;
+  }
+
+  /* ============================== THEME ============================== */
+
+  function applyThemeToDOM(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    var buttons = document.querySelectorAll('[data-theme-choice]');
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].classList.toggle('active', buttons[i].dataset.themeChoice === theme);
+    }
+  }
+
+  // Theme preference is stored in plaintext (it's not sensitive) at the top
+  // level of the vault, so it can be changed — and takes effect — even
+  // before the vault is unlocked.
+  function setTheme(theme) {
+    applyThemeToDOM(theme);
+    state.settings.theme = theme;
+    var loaded = StorageService.load();
+    if (loaded.ok) {
+      loaded.data.settings = loaded.data.settings || {};
+      loaded.data.settings.theme = theme;
+      StorageService.save(loaded.data);
+    }
+  }
+
+  /* ============================== SCREEN / TAB SWITCHING ============================== */
+
+  function showLockedScreen(mode) {
+    appShellEl.classList.add('hidden');
+    lockedScreenEl.classList.remove('hidden');
+    lockBtnEl.classList.add('hidden');
+    setupSectionEl.hidden = mode !== 'setup';
+    unlockSectionEl.hidden = mode !== 'unlock';
+    corruptedSectionEl.hidden = mode !== 'corrupted';
+    if (mode === 'unlock') {
+      setTimeout(function () { unlockPasswordInput.focus(); }, 30);
+    }
+  }
+
+  function showApp() {
+    lockedScreenEl.classList.add('hidden');
+    appShellEl.classList.remove('hidden');
+    lockBtnEl.classList.remove('hidden');
+  }
+
+  function switchTab(tab) {
+    for (var i = 0; i < navTabs.length; i++) {
+      navTabs[i].classList.toggle('active', navTabs[i].dataset.tab === tab);
+    }
+    var views = document.querySelectorAll('.content > .view');
+    for (var j = 0; j < views.length; j++) {
+      views[j].hidden = views[j].dataset.view !== tab;
+    }
+    if (tab === 'settings') {
+      autolockInput.value = state.settings.autoLockMinutes || 5;
+    }
+  }
+
+  /* ============================== NOTES LIST RENDERING ==============================
+     Rendering strategy: a full rebuild only happens when the set of notes
+     changes shape (unlock, create, delete, import). Ordinary typing just
+     patches the text inside the one relevant <li>, and a completed autosave
+     moves that single <li> to the top — nothing else in the list is
+     touched, which keeps things responsive even with many/long notes. */
+
+  function createListItemElement(note) {
+    var li = document.createElement('li');
+    li.className = 'note-item';
+    li.dataset.id = note.id;
+    li.innerHTML =
+      '<div class="note-item-title"></div>' +
+      '<div class="note-item-snippet"></div>' +
+      '<div class="note-item-time"></div>';
+    updateListItemContent(li, note);
+    li.addEventListener('click', function () { selectNote(note.id); });
+    return li;
+  }
+
+  function updateListItemContent(li, note) {
+    li.querySelector('.note-item-title').textContent = note.title.trim() || 'Untitled';
+    li.querySelector('.note-item-snippet').textContent = snippet(note.body);
+    li.querySelector('.note-item-time').textContent = formatRelativeTime(note.updatedAt);
+    li.classList.toggle('active', state.activeNoteId === note.id);
+    li.classList.toggle('corrupted', !!note._corrupted);
+  }
+
+  function renderFullNotesList() {
+    notesListEl.innerHTML = '';
+    noteElements = {};
+    var sorted = state.notes.slice().sort(function (a, b) { return b.updatedAt - a.updatedAt; });
+    for (var i = 0; i < sorted.length; i++) {
+      var li = createListItemElement(sorted[i]);
+      notesListEl.appendChild(li);
+      noteElements[sorted[i].id] = li;
+    }
+    applySearchFilter();
+    toggleEmptyState();
+  }
+
+  function onNoteEditingLive(note) {
+    var li = noteElements[note.id];
+    if (!li) return;
+    li.querySelector('.note-item-title').textContent = note.title.trim() || 'Untitled';
+    li.querySelector('.note-item-snippet').textContent = snippet(note.body);
+  }
+
+  function onNoteSaved(note) {
+    var li = noteElements[note.id];
+    if (!li) { renderFullNotesList(); return; }
+    updateListItemContent(li, note);
+    if (notesListEl.firstChild !== li) notesListEl.insertBefore(li, notesListEl.firstChild);
+    applySearchFilter();
+  }
+
+  function applySearchFilter() {
+    var q = state.searchQuery.trim().toLowerCase();
+    var anyVisible = false;
+    for (var id in noteElements) {
+      if (!noteElements.hasOwnProperty(id)) continue;
+      var note = findNote(id);
+      var li = noteElements[id];
+      var match = !q || (note && (note.title.toLowerCase().indexOf(q) !== -1 || note.body.toLowerCase().indexOf(q) !== -1));
+      li.hidden = !match;
+      if (match) anyVisible = true;
+    }
+    noResultsEl.hidden = !q || anyVisible || state.notes.length === 0;
+  }
+
+  function toggleEmptyState() {
+    var hasNotes = state.notes.length > 0;
+    notesEmptyStateEl.hidden = hasNotes;
+    notesListEl.hidden = !hasNotes;
+  }
+
+  /* ============================== EDITOR ============================== */
+
+  function selectNote(id) {
+    flushPendingSaveIfAny();
+    state.activeNoteId = id;
+    var note = findNote(id);
+    if (!note) return;
+
+    editorPlaceholderEl.classList.add('hidden');
+    editorContentEl.classList.remove('hidden');
+    noteTitleInput.value = note.title;
+    noteBodyInput.value = note.body;
+    setSaveIndicator('idle');
+
+    for (var key in noteElements) {
+      if (noteElements.hasOwnProperty(key)) noteElements[key].classList.remove('active');
+    }
+    if (noteElements[id]) noteElements[id].classList.add('active');
+
+    notesViewEl.classList.add('mobile-show-editor');
+  }
+
+  function deselectNote() {
+    state.activeNoteId = null;
+    editorContentEl.classList.add('hidden');
+    editorPlaceholderEl.classList.remove('hidden');
+    notesViewEl.classList.remove('mobile-show-editor');
+  }
+
+  function createNewNote() {
+    flushPendingSaveIfAny();
+    var now = Date.now();
+    var note = { id: generateId(), title: '', body: '', createdAt: now, updatedAt: now };
+    state.notes.push(note);
+    persistNote(note).then(function () {
+      renderFullNotesList();
+      selectNote(note.id);
+      noteTitleInput.focus();
+    });
+  }
+
+  function deleteActiveNote() {
+    if (!state.activeNoteId) return;
+    if (!window.confirm('Delete this note? This cannot be undone.')) return;
+    var id = state.activeNoteId;
+    state.notes = state.notes.filter(function (n) { return n.id !== id; });
+    delete encryptedCache[id];
+    writeVaultToStorage();
+
+    clearTimeout(state.saveTimer);
+    state.dirty = false;
+    deselectNote();
+
+    if (noteElements[id]) noteElements[id].remove();
+    delete noteElements[id];
+    toggleEmptyState();
+  }
+
+  function onEditorInput() {
+    var note = findNote(state.activeNoteId);
+    if (!note) return;
+    note.title = noteTitleInput.value;
+    note.body = noteBodyInput.value;
+    state.dirty = true;
+    onNoteEditingLive(note);
+    setSaveIndicator('editing');
+    clearTimeout(state.saveTimer);
+    state.saveTimer = setTimeout(flushPendingSaveIfAny, 500);
+  }
+
+  var saveIndicatorFadeTimer = null;
+  function setSaveIndicator(kind) {
+    clearTimeout(saveIndicatorFadeTimer);
+    saveIndicatorEl.classList.remove('editing', 'saving', 'saved', 'error');
+    if (kind === 'editing') {
+      saveIndicatorEl.textContent = 'Editing…';
+      saveIndicatorEl.classList.add('editing');
+    } else if (kind === 'saving') {
+      saveIndicatorEl.textContent = 'Saving…';
+      saveIndicatorEl.classList.add('saving');
+    } else if (kind === 'saved') {
+      saveIndicatorEl.textContent = 'Saved ✓';
+      saveIndicatorEl.classList.add('saved');
+      saveIndicatorFadeTimer = setTimeout(function () { saveIndicatorEl.textContent = ''; }, 2000);
+    } else if (kind === 'error') {
+      saveIndicatorEl.textContent = 'Error saving — will retry on next change';
+      saveIndicatorEl.classList.add('error');
+    } else {
+      saveIndicatorEl.textContent = '';
+    }
+  }
+
+  /* ============================== PERSISTENCE (encrypt + save) ============================== */
+
+  // Encrypts one note and updates the cache that mirrors on-disk ciphertext,
+  // then writes the whole vault. Only the changed note is re-encrypted —
+  // every other note reuses its already-cached ciphertext.
+  function persistNote(note) {
+    var payload = { title: note.title, body: note.body, createdAt: note.createdAt, updatedAt: note.updatedAt };
+    return CryptoService.encryptJSON(state.cryptoKey, payload).then(function (enc) {
+      encryptedCache[note.id] = enc;
+      writeVaultToStorage();
+    });
+  }
+
+  function writeVaultToStorage() {
+    var notesOut = state.notes.map(function (n) {
+      var enc = encryptedCache[n.id] || { iv: '', ciphertext: '' };
+      return { id: n.id, iv: enc.iv, ciphertext: enc.ciphertext };
+    });
+    var vault = {
+      version: DATA_VERSION,
+      kdf: state.vaultMeta.kdf,
+      verifier: state.vaultMeta.verifier,
+      notes: notesOut,
+      settings: state.settings
+    };
+    StorageService.save(vault);
+  }
+
+  function flushPendingSaveIfAny() {
+    clearTimeout(state.saveTimer);
+    state.saveTimer = null;
+    if (!state.dirty) return Promise.resolve();
+    var note = findNote(state.activeNoteId);
+    if (!note) { state.dirty = false; return Promise.resolve(); }
+    setSaveIndicator('saving');
+    note.updatedAt = Date.now();
+    return persistNote(note).then(function () {
+      state.dirty = false;
+      onNoteSaved(note);
+      setSaveIndicator('saved');
+    }).catch(function (err) {
+      console.error('Save failed', err);
+      setSaveIndicator('error');
+    });
+  }
+
+  /* ============================== LOCK / UNLOCK / SETUP ============================== */
+
+  function doLock() {
+    clearTimeout(state.autoLockTimeoutId);
+    clearTimeout(state.saveTimer);
+
+    // Wipe every trace of decrypted content from memory and the DOM.
+    state.cryptoKey = null;
+    state.vaultMeta = null;
+    state.notes = [];
+    state.activeNoteId = null;
+    state.dirty = false;
+    state.unlocked = false;
+    encryptedCache = {};
+    noteElements = {};
+    notesListEl.innerHTML = '';
+    noteTitleInput.value = '';
+    noteBodyInput.value = '';
+    searchInput.value = '';
+    state.searchQuery = '';
+    editorContentEl.classList.add('hidden');
+    editorPlaceholderEl.classList.remove('hidden');
+    notesViewEl.classList.remove('mobile-show-editor');
+    unlockPasswordInput.value = '';
+
+    showLockedScreen('unlock');
+  }
+
+  function lockNow() {
+    return flushPendingSaveIfAny().then(doLock);
+  }
+
+  var lastActivityReset = 0;
+  function noteActivity() {
+    if (!state.unlocked) return;
+    var now = Date.now();
+    if (now - lastActivityReset < 1000) return; // throttle high-frequency events
+    lastActivityReset = now;
+    resetAutoLockTimer();
+  }
+  function resetAutoLockTimer() {
+    clearTimeout(state.autoLockTimeoutId);
+    var minutes = (state.settings && state.settings.autoLockMinutes) || 5;
+    state.autoLockTimeoutId = setTimeout(function () { lockNow(); }, minutes * 60 * 1000);
+  }
+
+  function handleSetupSubmit(e) {
+    e.preventDefault();
+    var pw = setupPasswordInput.value;
+    var confirmPw = setupConfirmInput.value;
+    showStatus(setupStatusEl, '', null);
+
+    if (pw.length < 8) { showStatus(setupStatusEl, 'Password must be at least 8 characters.', 'error'); return; }
+    if (pw !== confirmPw) { showStatus(setupStatusEl, 'Passwords do not match.', 'error'); return; }
+
+    setSubmitBusy(setupForm, true, 'Setting up…');
+    var salt = CryptoService.generateSalt();
+
+    CryptoService.deriveKey(pw, salt, PBKDF2_ITERATIONS).then(function (key) {
+      return CryptoService.encryptJSON(key, { check: VERIFIER_CHECK_VALUE }).then(function (verifier) {
+        var vault = {
+          version: DATA_VERSION,
+          kdf: { salt: bufToBase64(salt), iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
+          verifier: verifier,
+          notes: [],
+          settings: { autoLockMinutes: 5, theme: state.settings.theme || 'auto' }
+        };
+        StorageService.save(vault);
+
+        state.cryptoKey = key;
+        state.vaultMeta = { kdf: vault.kdf, verifier: vault.verifier };
+        state.notes = [];
+        state.settings = vault.settings;
+        encryptedCache = {};
+        state.unlocked = true;
+
+        showApp();
+        renderFullNotesList();
+        switchTab('notes');
+        resetAutoLockTimer();
+      });
+    }).catch(function (err) {
+      console.error(err);
+      showStatus(setupStatusEl, 'Something went wrong setting up encryption. Please try again.', 'error');
+    }).then(function () {
+      setSubmitBusy(setupForm, false);
+    });
+  }
+
+  function handleUnlockSubmit(e) {
+    e.preventDefault();
+    var pw = unlockPasswordInput.value;
+    showStatus(unlockStatusEl, '', null);
+
+    var loaded = StorageService.load();
+    if (!loaded.ok) { showLockedScreen('corrupted'); return; }
+    var vault = loaded.data;
+
+    setSubmitBusy(unlockForm, true, 'Unlocking…');
+    var saltBytes = base64ToBuf(vault.kdf.salt);
+    var key;
+
+    CryptoService.deriveKey(pw, saltBytes, vault.kdf.iterations).then(function (derivedKey) {
+      key = derivedKey;
+      // Attempt to decrypt the verifier blob. AES-GCM's auth-tag check fails
+      // the same way whether the password is wrong or the data is tampered —
+      // that ambiguity is intentional, so nothing about the failure leaks.
+      return CryptoService.decryptJSON(key, vault.verifier.iv, vault.verifier.ciphertext);
+    }).then(function () {
+      // Password correct — decrypt every note into memory.
+      encryptedCache = {};
+      var decryptedNotes = [];
+      var decryptPromises = vault.notes.map(function (n) {
+        encryptedCache[n.id] = { iv: n.iv, ciphertext: n.ciphertext };
+        return CryptoService.decryptJSON(key, n.iv, n.ciphertext).then(function (payload) {
+          decryptedNotes.push({
+            id: n.id,
+            title: payload.title || '',
+            body: payload.body || '',
+            createdAt: payload.createdAt || 0,
+            updatedAt: payload.updatedAt || 0
+          });
+        }).catch(function () {
+          // This one note is tampered/corrupted — flag it instead of
+          // failing the whole unlock. Editing or deleting it resolves it.
+          decryptedNotes.push({
+            id: n.id,
+            title: '⚠ Corrupted note',
+            body: 'This note could not be decrypted. It may have been corrupted or tampered with. You can delete it, or start typing to replace it with fresh, correctly-encrypted content.',
+            createdAt: 0,
+            updatedAt: 0,
+            _corrupted: true
+          });
+        });
+      });
+
+      return Promise.all(decryptPromises).then(function () {
+        state.cryptoKey = key;
+        state.vaultMeta = { kdf: vault.kdf, verifier: vault.verifier };
+        state.notes = decryptedNotes;
+        state.settings = Object.assign({ autoLockMinutes: 5, theme: 'auto' }, vault.settings);
+        state.unlocked = true;
+
+        unlockPasswordInput.value = '';
+        showApp();
+        renderFullNotesList();
+        switchTab('notes');
+        resetAutoLockTimer();
+      });
+    }).catch(function () {
+      showStatus(unlockStatusEl, 'Incorrect password. Please try again.', 'error');
+    }).then(function () {
+      setSubmitBusy(unlockForm, false);
+    });
+  }
+
+  function eraseAllData() {
+    var ok = window.confirm('This will permanently erase all notes and reset SecureNotes on this device. This cannot be undone. Continue?');
+    if (!ok) return;
+    StorageService.clear();
+    location.reload();
+  }
+
+  /* ============================== SETTINGS ACTIONS ============================== */
+
+  function handleAutolockChange() {
+    var val = parseInt(autolockInput.value, 10);
+    if (isNaN(val) || val < 1) val = 1;
+    if (val > 120) val = 120;
+    autolockInput.value = val;
+    state.settings.autoLockMinutes = val;
+    writeVaultToStorage();
+    resetAutoLockTimer();
+  }
+
+  function handleChangePasswordSubmit(e) {
+    e.preventDefault();
+    showStatus(changePasswordStatusEl, '', null);
+    var current = currentPasswordInput.value;
+    var next = newPasswordInput.value;
+    var confirmNext = confirmNewPasswordInput.value;
+
+    if (next.length < 8) { showStatus(changePasswordStatusEl, 'New password must be at least 8 characters.', 'error'); return; }
+    if (next !== confirmNext) { showStatus(changePasswordStatusEl, 'New passwords do not match.', 'error'); return; }
+
+    setSubmitBusy(changePasswordForm, true, 'Updating…');
+    var currentSalt = base64ToBuf(state.vaultMeta.kdf.salt);
+
+    CryptoService.deriveKey(current, currentSalt, state.vaultMeta.kdf.iterations).then(function (currentKeyCheck) {
+      // Verify the current password against the existing verifier first.
+      return CryptoService.decryptJSON(currentKeyCheck, state.vaultMeta.verifier.iv, state.vaultMeta.verifier.ciphertext);
+    }).then(function () {
+      var newSalt = CryptoService.generateSalt();
+      return CryptoService.deriveKey(next, newSalt, PBKDF2_ITERATIONS).then(function (newKey) {
+        return CryptoService.encryptJSON(newKey, { check: VERIFIER_CHECK_VALUE }).then(function (newVerifier) {
+          // Re-encrypt every note with the new key, fresh IV each time.
+          var reencryptPromises = state.notes.map(function (note) {
+            var payload = { title: note.title, body: note.body, createdAt: note.createdAt, updatedAt: note.updatedAt };
+            return CryptoService.encryptJSON(newKey, payload).then(function (enc) {
+              encryptedCache[note.id] = enc;
+            });
+          });
+          return Promise.all(reencryptPromises).then(function () {
+            state.cryptoKey = newKey;
+            state.vaultMeta = {
+              kdf: { salt: bufToBase64(newSalt), iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
+              verifier: newVerifier
+            };
+            writeVaultToStorage();
+            changePasswordForm.reset();
+            showStatus(changePasswordStatusEl, 'Master password updated. All notes were re-encrypted.', 'success');
+          });
+        });
+      });
+    }).catch(function () {
+      showStatus(changePasswordStatusEl, 'Current password is incorrect.', 'error');
+    }).then(function () {
+      setSubmitBusy(changePasswordForm, false);
+    });
+  }
+
+  /* ============================== BACKUP: EXPORT / IMPORT ============================== */
+
+  function handleExport() {
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    var blob = new Blob([raw], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    var stamp = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = 'securenotes-backup-' + stamp + '.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function handleImport() {
+    showStatus(importStatusEl, '', null);
+    var file = importFileInput.files && importFileInput.files[0];
+    if (!file) { showStatus(importStatusEl, 'Choose a backup file first.', 'error'); return; }
+
+    var reader = new FileReader();
+    reader.onload = function () {
+      var data;
+      try { data = JSON.parse(reader.result); }
+      catch (e) { showStatus(importStatusEl, 'This file is not valid JSON.', 'error'); return; }
+
+      if (!isValidVaultShape(data)) {
+        showStatus(importStatusEl, "This file doesn't look like a SecureNotes backup.", 'error');
+        return;
+      }
+
+      var noteCount = data.notes.length;
+      var ok = window.confirm(
+        'Import this backup? It contains ' + noteCount + ' note(s) and will replace everything currently ' +
+        "stored in this browser. You'll need the password that was active when this backup was made. " +
+        'This cannot be undone.'
+      );
+      if (!ok) return;
+
+      StorageService.save(migrateVault(data));
+      applyThemeToDOM((data.settings && data.settings.theme) || 'auto');
+      lockNow().then(function () {
+        showStatus(unlockStatusEl, 'Backup imported. Enter the password used at the time of that backup.', 'success');
+      });
+      importFileInput.value = '';
+    };
+    reader.onerror = function () {
+      showStatus(importStatusEl, 'Could not read that file.', 'error');
+    };
+    reader.readAsText(file);
+  }
+
+  /* ============================== EVENT WIRING ============================== */
+
+  function wireEvents() {
+    setupForm.addEventListener('submit', handleSetupSubmit);
+    unlockForm.addEventListener('submit', handleUnlockSubmit);
+    corruptedResetBtn.addEventListener('click', eraseAllData);
+
+    lockBtnEl.addEventListener('click', lockNow);
+    for (var i = 0; i < navTabs.length; i++) {
+      navTabs[i].addEventListener('click', function (e) { switchTab(e.currentTarget.dataset.tab); });
+    }
+
+    newNoteBtn.addEventListener('click', createNewNote);
+    emptyNewNoteBtn.addEventListener('click', createNewNote);
+    deleteNoteBtn.addEventListener('click', deleteActiveNote);
+    backToListBtn.addEventListener('click', function () { notesViewEl.classList.remove('mobile-show-editor'); });
+    noteTitleInput.addEventListener('input', onEditorInput);
+    noteBodyInput.addEventListener('input', onEditorInput);
+    searchInput.addEventListener('input', function () {
+      state.searchQuery = searchInput.value;
+      applySearchFilter();
+    });
+
+    exportBtn.addEventListener('click', handleExport);
+    importBtn.addEventListener('click', handleImport);
+
+    autolockInput.addEventListener('change', handleAutolockChange);
+    changePasswordForm.addEventListener('submit', handleChangePasswordSubmit);
+    resetAppBtn.addEventListener('click', eraseAllData);
+
+    var themeButtons = document.querySelectorAll('[data-theme-choice]');
+    for (var j = 0; j < themeButtons.length; j++) {
+      themeButtons[j].addEventListener('click', function (e) { setTheme(e.currentTarget.dataset.themeChoice); });
+    }
+
+    ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'wheel'].forEach(function (evt) {
+      document.addEventListener(evt, noteActivity, { passive: true });
+    });
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden && state.unlocked) flushPendingSaveIfAny();
+    });
+  }
+
+  /* ============================== INIT ============================== */
+
+  function init() {
+    var loaded = StorageService.load();
+    if (loaded.ok) {
+      state.settings = Object.assign({ autoLockMinutes: 5, theme: 'auto' }, loaded.data.settings);
+    }
+    applyThemeToDOM(state.settings.theme);
+
+    if (!loaded.ok && loaded.reason === 'missing') {
+      showLockedScreen('setup');
+    } else if (!loaded.ok) {
+      showLockedScreen('corrupted');
+    } else {
+      showLockedScreen('unlock');
+    }
+
+    wireEvents();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
