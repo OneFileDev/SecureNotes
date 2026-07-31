@@ -5,8 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SecureNotes</title>
 
-<!-- Tiny inline theme-preload script: runs before CSS paints so returning users
-     don't see a flash of the wrong theme while the main script loads below. -->
+<!-- Custom logo, used as the page icon. SVG is the primary format (crisp at
+     any size); a PNG is also generated at runtime from a <canvas> further
+     down as a fallback for browsers that don't support SVG favicons. -->
+<link id="favicon-svg" rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwIiB5MT0iMCIgeDI9IjY0IiB5Mj0iNjQiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNzE4NmZmIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzNmNWNlMCIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTYiIGZpbGw9InVybCgjYmcpIi8+CiAgPHBhdGggZD0iTTIyIDMwIEMyMiAxOSAyNiAxMyAzMiAxMyBDMzggMTMgNDIgMTkgNDIgMzAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8cmVjdCB4PSIxNi41IiB5PSIyOCIgd2lkdGg9IjMxIiBoZWlnaHQ9IjI1IiByeD0iNi41IiBmaWxsPSIjZmZmZmZmIi8+CiAgPHBhdGggZD0iTTM5LjUgMjggTDQ3LjUgMjggTDQ3LjUgMzYgWiIgZmlsbD0iIzNmNWNlMCIgb3BhY2l0eT0iMC45MiIvPgogIDxjaXJjbGUgY3g9IjMyIiBjeT0iMzguNCIgcj0iMy41IiBmaWxsPSIjM2Y1Y2UwIi8+CiAgPHJlY3QgeD0iMzAuNSIgeT0iNDAuMiIgd2lkdGg9IjMiIGhlaWdodD0iNi40IiByeD0iMS41IiBmaWxsPSIjM2Y1Y2UwIi8+Cjwvc3ZnPgo=">
+
+<!-- Tiny inline theme-preload script: runs before CSS paints so returning
+     users don't see a flash of the wrong theme while the main script loads. -->
 <script>
 (function () {
   try {
@@ -26,79 +31,69 @@
   :root {
     --accent: #4f6df5;
     --accent-hover: #3f5ce0;
+    --accent-soft: color-mix(in srgb, #4f6df5 14%, transparent);
     --accent-contrast: #ffffff;
     --danger: #e5484d;
     --danger-hover: #d33c41;
     --success: #2fa365;
     --radius: 12px;
     --radius-sm: 8px;
+    --radius-lg: 16px;
     --font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
 
-  /* Light (default / fallback) */
   :root, [data-theme="light"] {
     --bg: #f4f5f9;
     --bg-elevated: #ffffff;
-    --bg-hover: #eceefa;
+    --bg-hover: #eef0fa;
     --bg-input: #ffffff;
     --text: #1a1c26;
-    --text-muted: #676d7e;
-    --border: #e0e2ec;
-    --shadow: rgba(20, 22, 40, 0.07);
+    --text-muted: #6b7080;
+    --text-faint: #9298ab;
+    --border: #e2e4ee;
+    --shadow: rgba(20, 22, 40, 0.08);
   }
 
   [data-theme="dark"] {
     --bg: #14151c;
-    --bg-elevated: #1c1e28;
-    --bg-hover: #262838;
-    --bg-input: #20222d;
+    --bg-elevated: #1b1d27;
+    --bg-hover: #252735;
+    --bg-input: #1f212c;
     --text: #eceef4;
-    --text-muted: #9599ac;
+    --text-muted: #979bad;
+    --text-faint: #6d7186;
     --border: #2b2d3a;
-    --shadow: rgba(0, 0, 0, 0.35);
+    --shadow: rgba(0, 0, 0, 0.4);
   }
 
   [data-theme="amoled"] {
     --bg: #000000;
-    --bg-elevated: #070708;
+    --bg-elevated: #060607;
     --bg-hover: #131315;
-    --bg-input: #0c0c0d;
-    --text: #eaeaea;
-    --text-muted: #8d8d8d;
-    --border: #1c1c1e;
+    --bg-input: #0b0b0c;
+    --text: #eeeeee;
+    --text-muted: #93939a;
+    --text-faint: #66666c;
+    --border: #1c1c1f;
     --shadow: rgba(0, 0, 0, 0.6);
   }
 
-  /* Auto: mirror light by default, swap to dark values by OS preference */
   [data-theme="auto"] {
-    --bg: #f4f5f9;
-    --bg-elevated: #ffffff;
-    --bg-hover: #eceefa;
-    --bg-input: #ffffff;
-    --text: #1a1c26;
-    --text-muted: #676d7e;
-    --border: #e0e2ec;
-    --shadow: rgba(20, 22, 40, 0.07);
+    --bg: #f4f5f9; --bg-elevated: #ffffff; --bg-hover: #eef0fa; --bg-input: #ffffff;
+    --text: #1a1c26; --text-muted: #6b7080; --text-faint: #9298ab;
+    --border: #e2e4ee; --shadow: rgba(20, 22, 40, 0.08);
   }
   @media (prefers-color-scheme: dark) {
     [data-theme="auto"] {
-      --bg: #14151c;
-      --bg-elevated: #1c1e28;
-      --bg-hover: #262838;
-      --bg-input: #20222d;
-      --text: #eceef4;
-      --text-muted: #9599ac;
-      --border: #2b2d3a;
-      --shadow: rgba(0, 0, 0, 0.35);
+      --bg: #14151c; --bg-elevated: #1b1d27; --bg-hover: #252735; --bg-input: #1f212c;
+      --text: #eceef4; --text-muted: #979bad; --text-faint: #6d7186;
+      --border: #2b2d3a; --shadow: rgba(0, 0, 0, 0.4);
     }
   }
 
   /* ============================== RESET / BASE ============================== */
   * { box-sizing: border-box; }
-  html, body {
-    height: 100%;
-    margin: 0;
-  }
+  html, body { height: 100%; margin: 0; }
   body {
     font-family: var(--font);
     background: var(--bg);
@@ -106,104 +101,79 @@
     -webkit-font-smoothing: antialiased;
     transition: background-color 0.15s ease, color 0.15s ease;
   }
-  button, input, textarea {
-    font-family: inherit;
-    color: inherit;
-  }
-  button {
-    cursor: pointer;
-  }
-  :focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
+  button, input, textarea, select { font-family: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .hidden { display: none !important; }
+  svg { display: block; }
 
-  #root {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-  }
+  #root { height: 100%; display: flex; flex-direction: column; }
+
+  /* ============================== ICONS ============================== */
+  .icon { width: 18px; height: 18px; flex-shrink: 0; }
+  .icon svg { width: 100%; height: 100%; }
+  .icon-sm { width: 15px; height: 15px; }
+  .icon-lg { width: 22px; height: 22px; }
 
   /* ============================== HEADER ============================== */
   .app-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 10px 18px;
+    gap: 6px;
+    padding: 9px 14px;
     background: var(--bg-elevated);
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
     z-index: 20;
   }
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .icon-btn:hover { background: var(--bg-hover); color: var(--text); }
+  .icon-btn.active { background: var(--accent-soft); color: var(--accent); }
+
   .brand {
     display: flex;
     align-items: center;
     gap: 8px;
     min-width: 0;
+    margin-right: auto;
+    padding-left: 2px;
   }
-  .brand-icon { font-size: 20px; line-height: 1; }
+  .brand-logo { width: 26px; height: 26px; border-radius: 7px; overflow: hidden; flex-shrink: 0; }
+  .brand-logo svg { width: 100%; height: 100%; display: block; }
   .brand-name {
     font-weight: 700;
-    font-size: 16px;
+    font-size: 15.5px;
+    letter-spacing: -0.01em;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .version-badge {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--accent);
-    background: color-mix(in srgb, var(--accent) 14%, transparent);
-    border-radius: 999px;
-    padding: 2px 8px;
-    white-space: nowrap;
-  }
-  .header-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
+  .header-actions { display: flex; align-items: center; gap: 6px; }
 
-  /* Theme toggle: compact icon row (used in header) and larger labeled row (settings) */
-  .theme-toggle {
-    display: flex;
-    gap: 2px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 2px;
-  }
-  .theme-toggle button {
-    border: none;
-    background: transparent;
-    color: var(--text-muted);
-    border-radius: calc(var(--radius-sm) - 2px);
-    padding: 5px 8px;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: background-color 0.12s ease, color 0.12s ease;
-  }
-  .theme-toggle button:hover { background: var(--bg-hover); color: var(--text); }
-  .theme-toggle button.active { background: var(--accent); color: var(--accent-contrast); }
-  .theme-toggle-large button { padding: 8px 12px; font-size: 14px; }
-  .theme-toggle-large .toggle-label { display: inline; }
-  .theme-toggle:not(.theme-toggle-large) .toggle-label { display: none; }
-
-  /* ============================== BUTTONS ============================== */
   .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
     border: 1px solid transparent;
     border-radius: var(--radius-sm);
-    padding: 9px 14px;
-    font-size: 14px;
+    padding: 8px 13px;
+    font-size: 13.5px;
     font-weight: 600;
     background: var(--bg);
     color: var(--text);
     border-color: var(--border);
-    transition: background-color 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
+    transition: background-color 0.12s ease, border-color 0.12s ease, opacity 0.12s ease, color .12s ease;
     white-space: nowrap;
   }
   .btn:hover { background: var(--bg-hover); }
@@ -217,260 +187,313 @@
   .btn-danger:hover { background: var(--danger-hover); border-color: var(--danger-hover); }
   .btn-danger-ghost { background: transparent; border-color: transparent; color: var(--danger); }
   .btn-danger-ghost:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); }
-  .btn-block { width: 100%; }
+  .btn-block { width: 100%; justify-content: center; }
+  .btn-sm { padding: 6px 10px; font-size: 12.5px; }
 
-  input[type="text"], input[type="password"], input[type="search"], input[type="number"], textarea {
+  input[type="text"], input[type="password"], input[type="search"], input[type="number"], textarea, select {
     background: var(--bg-input);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    padding: 10px 12px;
+    padding: 9px 11px;
     font-size: 14px;
     color: var(--text);
     width: 100%;
   }
-  input::placeholder, textarea::placeholder { color: var(--text-muted); }
+  input::placeholder, textarea::placeholder { color: var(--text-faint); }
+  select { appearance: none; -webkit-appearance: none; background-repeat: no-repeat; background-position: right 10px center; }
 
-  /* ============================== BODY / LAYOUT ============================== */
-  .body-area {
-    flex: 1;
-    min-height: 0;
-    position: relative;
-    display: flex;
-  }
-
-  /* ---------- Locked screen ---------- */
-  .locked-screen {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    overflow-y: auto;
-  }
-  .locked-card {
-    max-width: 420px;
-    width: 100%;
+  /* ============================== THEME PICKER (single button + popover) ============================== */
+  .theme-picker { position: relative; }
+  .theme-picker-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 172px;
     background: var(--bg-elevated);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 32px 28px;
-    box-shadow: 0 8px 30px var(--shadow);
-    text-align: center;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 10px 30px var(--shadow);
+    padding: 5px;
+    z-index: 60;
   }
-  .locked-icon { font-size: 34px; margin-bottom: 6px; }
-  .locked-card h1 { font-size: 20px; margin: 4px 0 6px; }
-  .locked-card .muted { color: var(--text-muted); font-size: 13.5px; margin: 0 0 18px; line-height: 1.5; }
-  .locked-card form { display: flex; flex-direction: column; gap: 10px; text-align: left; }
-  .disclaimer {
-    margin: 22px 0 0;
-    padding-top: 16px;
-    border-top: 1px solid var(--border);
-    font-size: 12px;
-    color: var(--text-muted);
-    line-height: 1.6;
-    text-align: left;
-  }
-
-  /* ---------- App shell ---------- */
-  .app-shell {
-    flex: 1;
-    display: flex;
-    min-height: 0;
+  .theme-picker-menu button {
     width: 100%;
-  }
-  .sidebar {
-    width: 190px;
-    flex-shrink: 0;
-    background: var(--bg-elevated);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    padding: 14px 10px;
-  }
-  .nav-tab {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 9px 12px;
-    border-radius: var(--radius-sm);
-    background: transparent;
+    padding: 8px 9px;
     border: none;
-    color: var(--text-muted);
-    font-size: 14px;
-    font-weight: 600;
+    background: transparent;
+    border-radius: calc(var(--radius-sm) - 2px);
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--text);
     text-align: left;
   }
-  .nav-tab .icon { font-size: 16px; width: 18px; text-align: center; }
-  .nav-tab:hover { background: var(--bg-hover); color: var(--text); }
-  .nav-tab.active { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+  .theme-picker-menu button:hover { background: var(--bg-hover); }
+  .theme-picker-menu button.selected { color: var(--accent); font-weight: 700; }
+  .theme-picker-menu button.selected .icon { color: var(--accent); }
+  .theme-picker-menu .icon { color: var(--text-muted); }
 
-  .content {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+  /* ============================== BODY / LAYOUT ============================== */
+  .body-area { flex: 1; min-height: 0; position: relative; display: flex; }
+
+  /* ---------- Locked screen ---------- */
+  .locked-screen { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px; overflow-y: auto; }
+  .locked-card {
+    max-width: 420px; width: 100%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 34px 28px;
+    box-shadow: 0 12px 40px var(--shadow);
+    text-align: center;
   }
-  .view { flex: 1; min-height: 0; display: flex; overflow: hidden; }
-  .view[hidden] { display: none; }
+  .locked-logo { width: 50px; height: 50px; margin: 0 auto 14px; border-radius: 13px; overflow: hidden; }
+  .locked-logo svg { width: 100%; height: 100%; display: block; }
+  .locked-card h1 { font-size: 19.5px; margin: 4px 0 6px; letter-spacing: -0.01em; }
+  .locked-card .muted { color: var(--text-muted); font-size: 13.5px; margin: 0 0 20px; line-height: 1.55; }
+  .locked-card form { display: flex; flex-direction: column; gap: 10px; text-align: left; }
+  .disclaimer {
+    margin: 24px 0 0; padding-top: 18px; border-top: 1px solid var(--border);
+    font-size: 12px; color: var(--text-muted); line-height: 1.65; text-align: left;
+  }
 
-  /* ---------- Notes view ---------- */
-  .notes-view { flex-direction: row; }
-  .notes-list-pane {
-    width: 300px;
+  /* ---------- App shell ---------- */
+  .app-shell { flex: 1; display: flex; min-height: 0; width: 100%; position: relative; }
+
+  .sidebar {
+    width: 258px;
     flex-shrink: 0;
+    background: var(--bg-elevated);
     border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    min-height: 0;
+    transition: width 0.18s ease;
+    overflow: hidden;
   }
-  .list-toolbar {
-    display: flex;
-    gap: 8px;
-    padding: 12px;
-    border-bottom: 1px solid var(--border);
-  }
-  .list-toolbar input[type="search"] { flex: 1; }
-  .notes-list {
-    list-style: none;
-    margin: 0;
-    padding: 6px;
-    overflow-y: auto;
-    flex: 1;
-  }
-  .note-item {
-    padding: 10px 12px;
+  .sidebar.sidebar-closed { width: 0; border-right-color: transparent; }
+  .sidebar-inner { width: 258px; display: flex; flex-direction: column; height: 100%; }
+
+  .sidebar-search { position: relative; padding: 12px 12px 8px; }
+  .sidebar-search .icon { position: absolute; left: 22px; top: 50%; transform: translateY(-50%); color: var(--text-faint); pointer-events: none; }
+  .sidebar-search input { padding-left: 34px; }
+
+  .sidebar-actions { display: flex; gap: 6px; padding: 4px 12px 10px; }
+  .sidebar-actions .btn { flex: 1; }
+
+  .sidebar-tree { flex: 1; overflow-y: auto; padding: 2px 8px 10px; }
+
+  .tree-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7.5px 8px;
     border-radius: var(--radius-sm);
     cursor: pointer;
-    margin-bottom: 2px;
-  }
-  .note-item:hover { background: var(--bg-hover); }
-  .note-item.active { background: color-mix(in srgb, var(--accent) 16%, transparent); }
-  .note-item.corrupted .note-item-title { color: var(--danger); }
-  .note-item-title { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .note-item-snippet { font-size: 12.5px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; }
-  .note-item-time { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
-  .empty-state {
-    padding: 30px 20px;
-    text-align: center;
-    color: var(--text-muted);
     font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text);
+    position: relative;
   }
-  .empty-state .btn { margin-top: 12px; }
+  .tree-item:hover { background: var(--bg-hover); }
+  .tree-item.active { background: var(--accent-soft); color: var(--accent); }
+  .tree-icon { color: var(--text-muted); display: flex; flex-shrink: 0; }
+  .tree-item.active .tree-icon { color: var(--accent); }
+  .tree-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tree-count { font-size: 11px; font-weight: 600; color: var(--text-faint); flex-shrink: 0; }
+  .tree-item.active .tree-count { color: var(--accent); opacity: 0.8; }
 
-  .editor-pane { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; }
-  .editor-placeholder {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-muted);
-    font-size: 14px;
-    text-align: center;
-    padding: 24px;
+  .notebook-row .notebook-expand {
+    display: flex; align-items: center; justify-content: center;
+    width: 16px; height: 16px; flex-shrink: 0;
+    background: transparent; border: none; color: var(--text-faint); border-radius: 4px;
+    transition: transform 0.15s ease;
   }
-  .editor-content { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 14px 20px 20px; }
-  .editor-toolbar {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
+  .notebook-row .notebook-expand.expanded { transform: rotate(90deg); }
+  .notebook-row .notebook-expand:hover { color: var(--text); }
+  .notebook-kebab {
+    display: none; align-items: center; justify-content: center;
+    width: 22px; height: 22px; flex-shrink: 0;
+    background: transparent; border: none; color: var(--text-faint); border-radius: 5px;
   }
-  .back-btn { display: none; }
-  .save-indicator {
-    flex: 1;
+  .notebook-row:hover .notebook-kebab { display: flex; }
+  .notebook-kebab:hover { background: var(--border); color: var(--text); }
+
+  .notebook-nested { margin: 1px 0 3px 22px; display: flex; flex-direction: column; gap: 1px; }
+  .tree-note-item {
+    padding: 6px 9px;
     font-size: 12.5px;
+    font-weight: 500;
     color: var(--text-muted);
-    transition: color 0.15s ease;
+    border-radius: 6px;
+    cursor: pointer;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  .save-indicator.saving { color: var(--text-muted); }
-  .save-indicator.saved { color: var(--success); }
+  .tree-note-item:hover { background: var(--bg-hover); color: var(--text); }
+  .tree-note-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .tree-nested-empty { padding: 5px 9px; font-size: 12px; color: var(--text-faint); font-style: italic; }
+
+  .sidebar-footer { flex-shrink: 0; padding: 8px; border-top: 1px solid var(--border); }
+
+  .sidebar-backdrop { display: none; }
+
+  @media (max-width: 768px) {
+    .sidebar {
+      position: absolute; top: 0; left: 0; bottom: 0;
+      width: 86%; max-width: 320px;
+      z-index: 40;
+      box-shadow: 6px 0 30px var(--shadow);
+      transform: translateX(0);
+      transition: transform 0.2s ease;
+      border-right: 1px solid var(--border);
+    }
+    .sidebar.sidebar-closed { transform: translateX(-100%); }
+    .sidebar-inner { width: 100%; }
+    .sidebar-backdrop {
+      display: block; position: absolute; inset: 0;
+      background: rgba(10, 10, 16, 0.4);
+      z-index: 35; opacity: 0; pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .sidebar-backdrop.visible { opacity: 1; pointer-events: auto; }
+  }
+
+  /* ---------- Notebook context menu (rename/delete) ---------- */
+  .popover-menu {
+    position: fixed;
+    min-width: 150px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 10px 30px var(--shadow);
+    padding: 5px;
+    z-index: 70;
+  }
+  .popover-menu button {
+    width: 100%; display: flex; align-items: center; gap: 9px;
+    padding: 8px 9px; border: none; background: transparent;
+    border-radius: calc(var(--radius-sm) - 2px);
+    font-size: 13.5px; font-weight: 500; color: var(--text); text-align: left;
+  }
+  .popover-menu button:hover { background: var(--bg-hover); }
+  .popover-menu button.danger { color: var(--danger); }
+  .popover-menu button.danger:hover { background: color-mix(in srgb, var(--danger) 10%, transparent); }
+
+  /* ---------- Main content ---------- */
+  .content { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .view { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .view[hidden] { display: none; }
+
+  /* Home view */
+  .home-overview { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .overview-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 20px 28px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .overview-header h1 { font-size: 21px; margin: 0; letter-spacing: -0.01em; }
+  .overview-count { color: var(--text-faint); font-size: 12.5px; font-weight: 600; margin-right: auto; }
+
+  .notes-rows { flex: 1; overflow-y: auto; padding: 16px 28px 28px; display: flex; flex-direction: column; gap: 8px; }
+  .note-row {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 13px 16px;
+    cursor: pointer;
+    transition: box-shadow 0.12s ease, border-color 0.12s ease;
+  }
+  .note-row:hover { box-shadow: 0 4px 18px var(--shadow); border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); }
+  .note-row-top { display: flex; align-items: baseline; gap: 10px; margin-bottom: 3px; }
+  .note-row-title { font-weight: 700; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .note-row-time { margin-left: auto; font-size: 11.5px; color: var(--text-faint); flex-shrink: 0; font-weight: 600; }
+  .note-row-snippet { font-size: 13px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .note-row.corrupted .note-row-title { color: var(--danger); }
+
+  .empty-state { margin: auto; text-align: center; color: var(--text-muted); font-size: 13.5px; padding: 30px; max-width: 320px; }
+  .empty-state .icon-lg { color: var(--text-faint); margin: 0 auto 12px; width: 40px; height: 40px; }
+  .empty-state .btn { margin-top: 14px; }
+
+  /* Editor */
+  .editor-content { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .editor-toolbar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .notebook-select { max-width: 190px; }
+  .save-indicator { flex: 1; display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-muted); justify-content: center; }
+  .save-indicator .icon { color: var(--success); }
   .save-indicator.error { color: var(--danger); }
+  .editor-body { flex: 1; min-height: 0; overflow-y: auto; padding: 22px 40px 40px; max-width: 860px; margin: 0 auto; width: 100%; }
   .note-title-input {
-    border: none;
-    background: transparent;
-    font-size: 20px;
-    font-weight: 700;
-    padding: 6px 2px;
-    margin-bottom: 4px;
+    border: none; background: transparent;
+    font-size: 25px; font-weight: 700; letter-spacing: -0.015em;
+    padding: 4px 0; margin-bottom: 6px;
   }
   .note-title-input:focus { outline: none; }
   .note-body-input {
-    flex: 1;
-    resize: none;
-    border: none;
-    background: transparent;
-    font-size: 14.5px;
-    line-height: 1.65;
-    padding: 6px 2px;
+    width: 100%; min-height: 55vh;
+    resize: none; border: none; background: transparent;
+    font-size: 15px; line-height: 1.75; padding: 6px 0;
   }
   .note-body-input:focus { outline: none; }
 
-  /* ---------- Generic panel views (Backup / Settings / About) ---------- */
-  .content > .view:not(.notes-view) { flex-direction: column; overflow-y: auto; padding: 24px 28px; gap: 16px; }
+  /* Settings view */
+  .settings-topbar {
+    display: flex; align-items: center; gap: 14px;
+    padding: 18px 28px 14px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .settings-topbar h1 { font-size: 19px; margin: 0; letter-spacing: -0.01em; }
+  .settings-scroll { flex: 1; overflow-y: auto; padding: 22px 28px 40px; display: flex; flex-direction: column; gap: 16px; }
   .panel {
     background: var(--bg-elevated);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 20px 22px;
     max-width: 640px;
+    width: 100%;
   }
-  .panel h2 { font-size: 15.5px; margin: 0 0 6px; }
-  .panel h3 { font-size: 14px; margin: 18px 0 6px; }
+  .panel h2 { font-size: 15px; margin: 0 0 6px; display: flex; align-items: center; gap: 9px; }
+  .panel h2 .icon { color: var(--accent); }
+  .panel h3 { font-size: 13.5px; margin: 18px 0 6px; }
   .panel .muted { color: var(--text-muted); font-size: 13.5px; line-height: 1.55; margin: 0 0 14px; }
-  .panel .hint { color: var(--text-muted); font-size: 12px; margin: 6px 0 0; }
+  .panel .hint { color: var(--text-faint); font-size: 12px; margin: 6px 0 0; }
   .panel label { font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px; }
   #change-password-form { display: flex; flex-direction: column; gap: 10px; max-width: 320px; }
   #autolock-input { max-width: 120px; }
-  .danger-zone { border-color: color-mix(in srgb, var(--danger) 40%, var(--border)); }
+  .danger-zone { border-color: color-mix(in srgb, var(--danger) 35%, var(--border)); }
   .danger-zone h2 { color: var(--danger); }
+  .danger-zone h2 .icon { color: var(--danger); }
   .status-msg { font-size: 13px; margin-top: 10px; min-height: 1.2em; }
   .status-msg.status-error { color: var(--danger); }
   .status-msg.status-success { color: var(--success); }
   #import-file-input { margin-bottom: 10px; font-size: 13px; }
 
-  .about-panel { max-width: 620px; }
+  .version-badge {
+    font-size: 11px; font-weight: 700; color: var(--accent);
+    background: var(--accent-soft); border-radius: 999px; padding: 2px 9px; white-space: nowrap;
+  }
   .changelog { margin: 0; padding-left: 18px; font-size: 13.5px; line-height: 1.7; color: var(--text); }
   .changelog li { margin-bottom: 6px; }
   .built-by { margin-top: 20px; font-size: 13px; color: var(--text-muted); }
   .built-by a { color: var(--accent); text-decoration: none; font-weight: 600; }
   .built-by a:hover { text-decoration: underline; }
 
-  /* ============================== RESPONSIVE ============================== */
-  @media (max-width: 860px) {
-    .notes-list-pane { width: 240px; }
-  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
   @media (max-width: 768px) {
-    .app-shell { flex-direction: column; }
-    .sidebar {
-      width: 100%;
-      flex-direction: row;
-      justify-content: space-around;
-      border-right: none;
-      border-top: 1px solid var(--border);
-      order: 2;
-      padding: 6px 4px;
-      gap: 0;
-    }
-    .nav-tab { flex-direction: column; gap: 2px; font-size: 10.5px; padding: 6px 4px; flex: 1; }
-    .nav-tab .icon { font-size: 18px; }
-    .content { order: 1; }
-
-    .notes-view { position: relative; }
-    .notes-view .notes-list-pane { display: flex; width: 100%; border-right: none; }
-    .notes-view .editor-pane { display: none; }
-    .notes-view.mobile-show-editor .notes-list-pane { display: none; }
-    .notes-view.mobile-show-editor .editor-pane { display: flex; }
-    .back-btn { display: inline-flex !important; }
-
+    .overview-header { padding: 16px 18px 12px; }
+    .notes-rows { padding: 14px 18px 24px; }
+    .editor-toolbar { padding: 10px 14px; }
+    .editor-body { padding: 18px 18px 32px; }
+    .settings-topbar { padding: 16px 18px 12px; }
+    .settings-scroll { padding: 16px 18px 32px; }
     .brand-name { display: none; }
-    .theme-toggle .toggle-label { display: none; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    * { transition: none !important; }
+    .note-title-input { font-size: 21px; }
   }
 </style>
 </head>
@@ -479,19 +502,19 @@
 
     <!-- ============================== HEADER ============================== -->
     <header class="app-header">
+      <button type="button" id="sidebar-toggle-btn" class="icon-btn hidden" title="Toggle sidebar" aria-label="Toggle sidebar"><span class="icon" data-icon="sidebarToggle"></span></button>
       <div class="brand">
-        <span class="brand-icon">🔒</span>
+        <span class="brand-logo" id="brand-logo"></span>
         <span class="brand-name">SecureNotes</span>
-        <span class="version-badge">v1.0.0</span>
       </div>
       <div class="header-actions">
-        <div class="theme-toggle" id="theme-toggle-header">
-          <button type="button" data-theme-choice="auto" title="Auto (match system)">🖥️<span class="toggle-label">Auto</span></button>
-          <button type="button" data-theme-choice="light" title="Light">☀️<span class="toggle-label">Light</span></button>
-          <button type="button" data-theme-choice="dark" title="Dark">🌙<span class="toggle-label">Dark</span></button>
-          <button type="button" data-theme-choice="amoled" title="AMOLED">⚫<span class="toggle-label">AMOLED</span></button>
+        <div class="theme-picker" data-theme-picker id="theme-picker-header">
+          <button type="button" class="icon-btn theme-picker-btn" aria-haspopup="true" aria-expanded="false" title="Change theme">
+            <span class="icon theme-picker-icon"></span>
+          </button>
+          <div class="theme-picker-menu" hidden></div>
         </div>
-        <button type="button" id="lock-btn" class="btn btn-outline hidden">🔒 Lock</button>
+        <button type="button" id="lock-btn" class="btn btn-outline hidden"><span class="icon icon-sm" data-icon="lock"></span>Lock</button>
       </div>
     </header>
 
@@ -500,9 +523,8 @@
       <!-- ============================== LOCKED SCREEN ============================== -->
       <section id="locked-screen" class="locked-screen">
         <div class="locked-card">
-          <div class="locked-icon">🔒</div>
+          <div class="locked-logo" id="locked-logo"></div>
 
-          <!-- First launch: create master password -->
           <div id="locked-setup" hidden>
             <h1>Welcome to SecureNotes</h1>
             <p class="muted">Create a master password to encrypt your notes on this device. Choose something memorable — there is no way to recover it if it's lost.</p>
@@ -514,7 +536,6 @@
             <p id="setup-status" class="status-msg"></p>
           </div>
 
-          <!-- Returning visit: unlock -->
           <div id="locked-unlock" hidden>
             <h1>Welcome back</h1>
             <p class="muted">Enter your master password to unlock your notes.</p>
@@ -525,7 +546,6 @@
             <p id="unlock-status" class="status-msg"></p>
           </div>
 
-          <!-- Corrupted / tampered data -->
           <div id="locked-corrupted" hidden>
             <h1>Data problem detected</h1>
             <p class="muted">SecureNotes couldn't read its stored data on this device — it may be corrupted, tampered with, or from an incompatible version. Your notes cannot be recovered from a corrupted store.</p>
@@ -533,125 +553,158 @@
           </div>
 
           <p class="disclaimer">
-            🔐 Notes are encrypted locally in your browser (AES-256-GCM) and never leave this device. This gives solid protection for personal, local use — it is not a substitute for enterprise-grade security. There is no backdoor: if you forget your master password, your notes cannot be recovered by anyone, including the developer.
+            Notes are encrypted locally in your browser (AES-256-GCM) and never leave this device. This gives solid protection for personal, local use — it is not a substitute for enterprise-grade security. There is no backdoor: if you forget your master password, your notes cannot be recovered by anyone, including the developer.
           </p>
         </div>
       </section>
 
       <!-- ============================== APP SHELL (unlocked) ============================== -->
       <div id="app-shell" class="app-shell hidden">
-        <nav class="sidebar">
-          <button type="button" class="nav-tab active" data-tab="notes"><span class="icon">📝</span><span class="label">Notes</span></button>
-          <button type="button" class="nav-tab" data-tab="backup"><span class="icon">📦</span><span class="label">Backup</span></button>
-          <button type="button" class="nav-tab" data-tab="settings"><span class="icon">⚙️</span><span class="label">Settings</span></button>
-          <button type="button" class="nav-tab" data-tab="about"><span class="icon">ℹ️</span><span class="label">About</span></button>
-        </nav>
+        <aside class="sidebar" id="sidebar">
+          <div class="sidebar-inner">
+            <div class="sidebar-search">
+              <span class="icon icon-sm" data-icon="search"></span>
+              <input type="search" id="search-input" placeholder="Search notes…" aria-label="Search notes">
+            </div>
+            <div class="sidebar-actions">
+              <button type="button" id="new-note-btn" class="btn btn-accent btn-sm"><span class="icon icon-sm" data-icon="plus"></span>Note</button>
+              <button type="button" id="new-notebook-btn" class="btn btn-outline btn-sm"><span class="icon icon-sm" data-icon="plus"></span>Notebook</button>
+            </div>
+            <nav class="sidebar-tree" id="sidebar-tree"></nav>
+            <div class="sidebar-footer">
+              <button type="button" class="tree-item" id="settings-nav-btn">
+                <span class="tree-icon" data-icon="settingsGear"></span>
+                <span class="tree-label">Settings</span>
+              </button>
+            </div>
+          </div>
+        </aside>
+        <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
 
         <div class="content">
 
-          <!-- ---------- Notes ---------- -->
-          <section class="view notes-view" data-view="notes">
-            <div class="notes-list-pane">
-              <div class="list-toolbar">
-                <input type="search" id="search-input" placeholder="Search notes…" aria-label="Search notes">
-                <button type="button" id="new-note-btn" class="btn btn-accent" title="New note">+ New</button>
+          <!-- ---------- Home (notebook overview + editor) ---------- -->
+          <section class="view" data-view="home" id="view-home">
+            <div class="home-overview" id="home-overview">
+              <div class="overview-header">
+                <h1 id="overview-title">All Notes</h1>
+                <span class="overview-count" id="overview-count"></span>
+                <button type="button" id="new-note-btn-home" class="btn btn-accent btn-sm"><span class="icon icon-sm" data-icon="plus"></span>New note</button>
               </div>
-              <ul class="notes-list" id="notes-list"></ul>
-              <p class="empty-state" id="notes-empty-state" hidden>
-                No notes yet.<br>
+              <div class="notes-rows" id="notes-rows"></div>
+              <div class="empty-state" id="notes-empty-state" hidden>
+                <div class="icon-lg" data-icon="noteDoc"></div>
+                <p id="empty-state-text">No notes yet.</p>
                 <button type="button" class="btn btn-accent" id="empty-new-note-btn">Create your first note</button>
-              </p>
-              <p class="empty-state" id="no-results-msg" hidden>No notes match your search.</p>
-            </div>
-            <div class="editor-pane">
-              <div class="editor-placeholder" id="editor-placeholder">
-                <p>Select a note, or create a new one, to start writing.</p>
               </div>
-              <div class="editor-content hidden" id="editor-content">
-                <div class="editor-toolbar">
-                  <button type="button" class="btn btn-ghost back-btn" id="back-to-list-btn">← Back</button>
-                  <span class="save-indicator" id="save-indicator"></span>
-                  <button type="button" class="btn btn-danger-ghost" id="delete-note-btn">Delete</button>
-                </div>
+              <div class="empty-state" id="no-results-msg" hidden>
+                <div class="icon-lg" data-icon="search"></div>
+                <p>No notes match your search.</p>
+              </div>
+            </div>
+
+            <div class="editor-content hidden" id="editor-content">
+              <div class="editor-toolbar">
+                <button type="button" class="btn btn-ghost" id="back-to-overview-btn"><span class="icon icon-sm" data-icon="backArrow"></span><span id="back-label">All Notes</span></button>
+                <select id="note-notebook-select" class="notebook-select" aria-label="Notebook"></select>
+                <span class="save-indicator" id="save-indicator"></span>
+                <button type="button" class="btn btn-danger-ghost" id="delete-note-btn"><span class="icon icon-sm" data-icon="trash"></span>Delete</button>
+              </div>
+              <div class="editor-body">
                 <input type="text" id="note-title-input" class="note-title-input" placeholder="Untitled note" aria-label="Note title" maxlength="300">
-                <textarea id="note-body-input" class="note-body-input" placeholder="Start typing…"></textarea>
+                <textarea id="note-body-input" class="note-body-input" placeholder="Start typing…" aria-label="Note body"></textarea>
               </div>
             </div>
           </section>
 
-          <!-- ---------- Backup ---------- -->
-          <section class="view" data-view="backup" hidden>
-            <div class="panel">
-              <h2>Export encrypted backup</h2>
-              <p class="muted">Download a copy of your notes exactly as they're stored — still fully encrypted. Keep it somewhere safe; you'll need the master password that's active right now to restore it later.</p>
-              <button type="button" id="export-btn" class="btn btn-accent">⬇ Export encrypted backup</button>
+          <!-- ---------- Settings (includes Backup + About) ---------- -->
+          <section class="view" data-view="settings" hidden id="view-settings">
+            <div class="settings-topbar">
+              <button type="button" class="btn btn-ghost" id="settings-back-btn"><span class="icon icon-sm" data-icon="backArrow"></span>Back</button>
+              <h1>Settings</h1>
             </div>
-            <div class="panel">
-              <h2>Import backup</h2>
-              <p class="muted">Restoring a backup replaces every note currently stored in this browser. This can't be undone, and you'll need the password that was active when that backup was made.</p>
-              <input type="file" id="import-file-input" accept="application/json">
-              <br>
-              <button type="button" id="import-btn" class="btn btn-outline">⬆ Import backup</button>
-              <p id="import-status" class="status-msg"></p>
-            </div>
-          </section>
+            <div class="settings-scroll">
 
-          <!-- ---------- Settings ---------- -->
-          <section class="view" data-view="settings" hidden>
-            <div class="panel">
-              <h2>Appearance</h2>
-              <div class="theme-toggle theme-toggle-large" id="theme-toggle-settings">
-                <button type="button" data-theme-choice="auto">🖥️<span class="toggle-label">Auto</span></button>
-                <button type="button" data-theme-choice="light">☀️<span class="toggle-label">Light</span></button>
-                <button type="button" data-theme-choice="dark">🌙<span class="toggle-label">Dark</span></button>
-                <button type="button" data-theme-choice="amoled">⚫<span class="toggle-label">AMOLED</span></button>
+              <div class="panel">
+                <h2><span class="icon" data-icon="themeAuto"></span>Appearance</h2>
+                <p class="muted">Choose how SecureNotes looks.</p>
+                <div class="theme-picker" data-theme-picker id="theme-picker-settings">
+                  <button type="button" class="btn btn-outline theme-picker-btn" aria-haspopup="true" aria-expanded="false">
+                    <span class="icon icon-sm theme-picker-icon"></span>
+                    <span class="theme-picker-label">Theme</span>
+                  </button>
+                  <div class="theme-picker-menu" hidden></div>
+                </div>
               </div>
-            </div>
-            <div class="panel">
-              <h2>Auto-lock</h2>
-              <label for="autolock-input">Lock automatically after this many minutes of inactivity</label>
-              <input type="number" id="autolock-input" min="1" max="120" step="1">
-              <p class="hint">Between 1 and 120 minutes. Applies the next time the app is idle.</p>
-            </div>
-            <div class="panel">
-              <h2>Change master password</h2>
-              <p class="muted">Re-encrypts all of your notes with the new password.</p>
-              <form id="change-password-form">
-                <input type="password" id="current-password-input" placeholder="Current password" aria-label="Current password" autocomplete="current-password" required>
-                <input type="password" id="new-password-input" placeholder="New password (min 8 characters)" aria-label="New password" autocomplete="new-password" minlength="8" required>
-                <input type="password" id="confirm-new-password-input" placeholder="Confirm new password" aria-label="Confirm new password" autocomplete="new-password" minlength="8" required>
-                <button type="submit" class="btn btn-accent">Update password</button>
-              </form>
-              <p id="change-password-status" class="status-msg"></p>
-            </div>
-            <div class="panel danger-zone">
-              <h2>Danger zone</h2>
-              <p class="muted">Permanently erase all notes and reset SecureNotes on this device. This cannot be undone.</p>
-              <button type="button" id="reset-app-btn" class="btn btn-danger">Erase all data</button>
-            </div>
-          </section>
 
-          <!-- ---------- About ---------- -->
-          <section class="view" data-view="about" hidden>
-            <div class="panel about-panel">
-              <h2>SecureNotes <span class="version-badge">v1.0.0</span></h2>
-              <p class="muted">Private, password-protected notes, encrypted entirely in your browser.</p>
+              <div class="panel">
+                <h2><span class="icon" data-icon="lock"></span>Auto-lock</h2>
+                <label for="autolock-input">Lock automatically after this many minutes of inactivity</label>
+                <input type="number" id="autolock-input" min="1" max="120" step="1">
+                <p class="hint">Between 1 and 120 minutes. Applies the next time the app is idle.</p>
+              </div>
 
-              <h3>Changelog</h3>
-              <ul class="changelog">
-                <li><strong>v1.0.0</strong> — Initial release: master-password gate, AES-256-GCM encrypted notes with PBKDF2 key derivation, autosave, configurable auto-lock, encrypted backup/restore, and Auto/Light/Dark/AMOLED themes.</li>
-              </ul>
+              <div class="panel">
+                <h2><span class="icon" data-icon="lock"></span>Change master password</h2>
+                <p class="muted">Re-encrypts all of your notes and notebooks with the new password.</p>
+                <form id="change-password-form">
+                  <input type="password" id="current-password-input" placeholder="Current password" aria-label="Current password" autocomplete="current-password" required>
+                  <input type="password" id="new-password-input" placeholder="New password (min 8 characters)" aria-label="New password" autocomplete="new-password" minlength="8" required>
+                  <input type="password" id="confirm-new-password-input" placeholder="Confirm new password" aria-label="Confirm new password" autocomplete="new-password" minlength="8" required>
+                  <button type="submit" class="btn btn-accent">Update password</button>
+                </form>
+                <p id="change-password-status" class="status-msg"></p>
+              </div>
 
-              <h3>A note on security</h3>
-              <p class="muted">SecureNotes encrypts everything locally using your browser's built-in Web Crypto API (PBKDF2 + AES-256-GCM) — nothing is ever sent anywhere. It's built for personal, local use: a convenient way to keep casual notes private on your own device. It is not a substitute for enterprise-grade security tools, and it has no password-recovery mechanism or backdoor of any kind. If you forget your master password, your notes cannot be recovered — by anyone, including the developer.</p>
+              <div class="panel">
+                <h2><span class="icon" data-icon="download"></span>Export encrypted backup</h2>
+                <p class="muted">Download a copy of your notes exactly as they're stored — still fully encrypted. Keep it somewhere safe; you'll need the master password that's active right now to restore it later.</p>
+                <button type="button" id="export-btn" class="btn btn-accent"><span class="icon icon-sm" data-icon="download"></span>Export backup</button>
+              </div>
 
-              <p class="built-by">Built by <a href="https://github.com/OneFileDev" target="_blank" rel="noopener noreferrer">OneFileDev</a></p>
+              <div class="panel">
+                <h2><span class="icon" data-icon="upload"></span>Import backup</h2>
+                <p class="muted">Restoring a backup replaces every note and notebook currently stored in this browser. This can't be undone, and you'll need the password that was active when that backup was made.</p>
+                <input type="file" id="import-file-input" accept="application/json">
+                <br>
+                <button type="button" id="import-btn" class="btn btn-outline"><span class="icon icon-sm" data-icon="upload"></span>Import backup</button>
+                <p id="import-status" class="status-msg"></p>
+              </div>
+
+              <div class="panel about-panel">
+                <h2>SecureNotes <span class="version-badge">v1.1.0</span></h2>
+                <p class="muted">Private, password-protected notes, encrypted entirely in your browser.</p>
+
+                <h3>Changelog</h3>
+                <ul class="changelog">
+                  <li><strong>v1.1.0</strong> — Redesigned navigation with a foldable sidebar and notebooks, consolidated Settings (now includes Backup and About), a custom logo, and a single unified theme switcher with a refreshed icon set.</li>
+                  <li><strong>v1.0.0</strong> — Initial release: master-password gate, AES-256-GCM encrypted notes with PBKDF2 key derivation, autosave, configurable auto-lock, encrypted backup/restore, and Auto/Light/Dark/AMOLED themes.</li>
+                </ul>
+
+                <h3>A note on security</h3>
+                <p class="muted">SecureNotes encrypts everything locally using your browser's built-in Web Crypto API (PBKDF2 + AES-256-GCM) — nothing is ever sent anywhere. It's built for personal, local use: a convenient way to keep casual notes private on your own device. It is not a substitute for enterprise-grade security tools, and it has no password-recovery mechanism or backdoor of any kind. If you forget your master password, your notes cannot be recovered — by anyone, including the developer.</p>
+
+                <p class="built-by">Built by <a href="https://github.com/OneFileDev" target="_blank" rel="noopener noreferrer">OneFileDev</a></p>
+              </div>
+
+              <div class="panel danger-zone">
+                <h2><span class="icon" data-icon="trash"></span>Danger zone</h2>
+                <p class="muted">Permanently erase all notes, notebooks, and settings, and reset SecureNotes on this device. This cannot be undone.</p>
+                <button type="button" id="reset-app-btn" class="btn btn-danger"><span class="icon icon-sm" data-icon="trash"></span>Erase all data</button>
+              </div>
+
             </div>
           </section>
 
         </div>
       </div>
 
+    </div>
+
+    <!-- Positioned outside the (transformed, on mobile) sidebar so position:fixed works correctly -->
+    <div class="popover-menu hidden" id="notebook-context-menu">
+      <button type="button" id="notebook-rename-btn"><span class="icon icon-sm" data-icon="pencil"></span>Rename</button>
+      <button type="button" id="notebook-delete-btn" class="danger"><span class="icon icon-sm" data-icon="trash"></span>Delete</button>
     </div>
   </div>
 
@@ -667,8 +720,6 @@
      (Web Crypto API) — no third-party crypto libraries.
      ========================================================================== */
 
-  // Fail loudly (but gracefully) if the browser lacks the Web Crypto API,
-  // rather than letting cryptic errors surface later.
   if (!window.crypto || !window.crypto.subtle) {
     document.body.innerHTML =
       '<div style="padding:40px;font-family:system-ui,sans-serif;max-width:520px;margin:40px auto;">' +
@@ -678,16 +729,70 @@
     return;
   }
 
+  /* ============================== ICON LIBRARY ==============================
+     A small set of hand-authored, single-stroke SVG icons (no icon-font or
+     external library). They use currentColor so CSS controls their tint. */
+
+  var ICONS = {
+    sidebarToggle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><line x1="9.5" y1="4.5" x2="9.5" y2="19.5"/></svg>',
+    lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2.2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.2" r="1.15" fill="currentColor" stroke="none"/></svg>',
+    themeAuto: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="12" rx="2"/><line x1="8" y1="20" x2="16" y2="20"/><line x1="12" y1="16.5" x2="12" y2="20"/></svg>',
+    themeLight: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><line x1="12" y1="2.5" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="21.5"/><line x1="2.5" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="21.5" y2="12"/><line x1="4.9" y1="4.9" x2="6.6" y2="6.6"/><line x1="17.4" y1="17.4" x2="19.1" y2="19.1"/><line x1="4.9" y1="19.1" x2="6.6" y2="17.4"/><line x1="17.4" y1="6.6" x2="19.1" y2="4.9"/></svg>',
+    themeDark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg>',
+    themeAmoled: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17Z" fill="currentColor" stroke="none"/></svg>',
+    settingsGear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="6.2"/><circle cx="12" cy="12" r="2.1"/><line x1="19.40" y1="12.00" x2="21.60" y2="12.00"/><line x1="17.23" y1="17.23" x2="18.79" y2="18.79"/><line x1="12.00" y1="19.40" x2="12.00" y2="21.60"/><line x1="6.77" y1="17.23" x2="5.21" y2="18.79"/><line x1="4.60" y1="12.00" x2="2.40" y2="12.00"/><line x1="6.77" y1="6.77" x2="5.21" y2="5.21"/><line x1="12.00" y1="4.60" x2="12.00" y2="2.40"/><line x1="17.23" y1="6.77" x2="18.79" y2="5.21"/></svg>',
+    notebookFolder: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M4 6 H9.5 L11.3 8 H20 V17.5 H4 Z"/></svg>',
+    noteDoc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4 H14 L18 8 V20 H6 Z"/><path d="M14 4 V8 H18"/><line x1="9" y1="12.3" x2="15" y2="12.3"/><line x1="9" y1="15.3" x2="15" y2="15.3"/><line x1="9" y1="18.3" x2="13" y2="18.3"/></svg>',
+    search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.3" y1="15.3" x2="20.5" y2="20.5"/></svg>',
+    plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+    chevronRight: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 5 16 12 9 19"/></svg>',
+    kebab: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="5.5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="18.5" r="1.6"/></svg>',
+    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="4.5" y1="7" x2="19.5" y2="7"/><path d="M9.3 7 V4.8 H14.7 V7"/><path d="M6.7 7 L7.5 19 H16.5 L17.3 7"/><line x1="10.2" y1="10.5" x2="10.2" y2="16.5"/><line x1="13.8" y1="10.5" x2="13.8" y2="16.5"/></svg>',
+    download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="3.5" x2="12" y2="14.5"/><polyline points="7.5 11 12 15.5 16.5 11"/><path d="M4.5 17.5 V20.5 H19.5 V17.5"/></svg>',
+    upload: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="14.5" x2="12" y2="3.5"/><polyline points="7.5 8 12 3.5 16.5 8"/><path d="M4.5 17.5 V20.5 H19.5 V17.5"/></svg>',
+    backArrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="14.5 5.5 8 12 14.5 18.5"/></svg>',
+    warning: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 L21 19 H3 Z"/><line x1="12" y1="10" x2="12" y2="14.2"/><circle cx="12" cy="16.6" r="0.9" fill="currentColor" stroke="none"/></svg>',
+    check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polyline points="4.5 12.5 9.5 17.5 19.5 6.5"/></svg>',
+    pencil: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 L4 16.2 L15.2 5 L19 8.8 L7.8 20 Z"/><line x1="13" y1="7" x2="17" y2="10.8"/></svg>'
+  };
+
+  var LOGO_SVG =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">' +
+    '<defs><linearGradient id="logoBg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">' +
+    '<stop offset="0" stop-color="#7186ff"/><stop offset="1" stop-color="#3f5ce0"/></linearGradient></defs>' +
+    '<rect x="0" y="0" width="64" height="64" rx="16" fill="url(#logoBg)"/>' +
+    '<path d="M22 30 C22 19 26 13 32 13 C38 13 42 19 42 30" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>' +
+    '<rect x="16.5" y="28" width="31" height="25" rx="6.5" fill="#ffffff"/>' +
+    '<path d="M39.5 28 L47.5 28 L47.5 36 Z" fill="#3f5ce0" opacity="0.92"/>' +
+    '<circle cx="32" cy="38.4" r="3.5" fill="#3f5ce0"/>' +
+    '<rect x="30.5" y="40.2" width="3" height="6.4" rx="1.5" fill="#3f5ce0"/>' +
+    '</svg>';
+
+  function iconMarkup(name) { return ICONS[name] || ''; }
+
+  function renderStaticIcons(root) {
+    var nodes = (root || document).querySelectorAll('[data-icon]');
+    for (var i = 0; i < nodes.length; i++) {
+      nodes[i].innerHTML = iconMarkup(nodes[i].getAttribute('data-icon'));
+      nodes[i].classList.add('icon');
+    }
+  }
+
+  var THEME_DEFS = [
+    { id: 'auto', label: 'Auto', icon: 'themeAuto' },
+    { id: 'light', label: 'Light', icon: 'themeLight' },
+    { id: 'dark', label: 'Dark', icon: 'themeDark' },
+    { id: 'amoled', label: 'AMOLED', icon: 'themeAmoled' }
+  ];
+
   /* ============================== CONSTANTS ============================== */
 
   var STORAGE_KEY = 'secureNotesVault';
-  var DATA_VERSION = 1;              // Bump + add a migration step in migrateVault() if the schema ever changes.
+  var DATA_VERSION = 2;              // Schema version. v2 adds `notebooks`.
   var PBKDF2_ITERATIONS = 600000;    // Comfortably above the 550,000 floor.
   var VERIFIER_CHECK_VALUE = 'secure-notes-verify-v1';
 
-  /* ============================== BASE64 <-> ArrayBuffer HELPERS ==============================
-     localStorage only stores strings, so binary crypto material (salts, IVs,
-     ciphertext) is base64-encoded before it's persisted. */
+  /* ============================== BASE64 <-> ArrayBuffer HELPERS ============================== */
 
   function bufToBase64(buf) {
     var bytes = new Uint8Array(buf);
@@ -704,7 +809,6 @@
 
   function generateId() {
     if (window.crypto.randomUUID) return window.crypto.randomUUID();
-    // Fallback UUID v4 generator built from CSPRNG bytes, for older browsers.
     var b = window.crypto.getRandomValues(new Uint8Array(16));
     b[6] = (b[6] & 0x0f) | 0x40;
     b[8] = (b[8] & 0x3f) | 0x80;
@@ -716,19 +820,18 @@
      CRYPTO SERVICE
      ------------------------------------------------------------------------
      Key derivation: PBKDF2-SHA256 is the strongest password-based KDF that
-     SubtleCrypto natively exposes (browsers don't yet ship Argon2/scrypt
-     without a third-party library, which this app deliberately avoids), so
-     we lean on a high iteration count instead.
+     SubtleCrypto natively exposes (browsers don't ship Argon2/scrypt without
+     a third-party library, which this app deliberately avoids), so we lean
+     on a high iteration count instead.
 
      Encryption: AES-256-GCM, an authenticated cipher — every encrypt call
      gets a fresh random 96-bit IV, and decryption fails (throws) if the key
-     is wrong OR the ciphertext was tampered with. We rely on that single
-     failure mode everywhere: a wrong password and corrupted data look
-     identical from the outside, so no information is leaked either way.
+     is wrong OR the ciphertext was tampered with. That single failure mode
+     is used everywhere: a wrong password and corrupted data look identical
+     from the outside, so no information is leaked either way.
 
-     The derived AES key is created as non-extractable, so raw key bytes
-     can never be pulled back out of it even from within this page's own
-     JS — only encrypt/decrypt operations are possible with it.
+     The derived AES key is created as non-extractable, so raw key bytes can
+     never be pulled back out of it even from within this page's own JS.
      ========================================================================== */
 
   var CryptoService = {
@@ -745,13 +848,12 @@
           { name: 'PBKDF2', salt: saltBytes, iterations: iterations, hash: 'SHA-256' },
           baseKey,
           { name: 'AES-GCM', length: 256 },
-          false,               // not extractable — raw bytes can never leave SubtleCrypto
+          false,
           ['encrypt', 'decrypt']
         );
       });
     },
 
-    // Encrypts a plain JS object. Returns base64 iv + ciphertext, ready to persist.
     encryptJSON: function (key, obj) {
       var iv = this.generateIV();
       var data = new TextEncoder().encode(JSON.stringify(obj));
@@ -760,8 +862,6 @@
       });
     },
 
-    // Decrypts back to a plain JS object. Throws (OperationError) on wrong
-    // key or tampered ciphertext — callers catch this generically.
     decryptJSON: function (key, ivB64, ciphertextB64) {
       var iv = base64ToBuf(ivB64);
       var ct = base64ToBuf(ciphertextB64);
@@ -774,15 +874,16 @@
   /* ==========================================================================
      STORAGE SERVICE
      ------------------------------------------------------------------------
-     Storage choice: localStorage. Notes here are small-to-medium blocks of
-     text and the whole app is single-user/single-device, so we don't need
-     IndexedDB's async transactions or larger storage ceiling — localStorage's
-     simple synchronous get/set keeps the code straightforward, and 5-10MB
-     of headroom is generous for personal note-taking. (If this app ever
-     needed to store large attachments, IndexedDB would be the better choice.)
+     Storage choice: localStorage. Notes/notebooks here are small-to-medium
+     blocks of text and the app is single-user/single-device, so we don't
+     need IndexedDB's async transactions or larger storage ceiling —
+     localStorage's simple synchronous get/set keeps the code straightforward,
+     and 5-10MB of headroom is generous for personal note-taking. (If this
+     app ever needed to store large attachments, IndexedDB would be the
+     better choice.)
 
      Only ciphertext, IVs, and the KDF salt are ever written here — never a
-     plaintext password or plaintext note body.
+     plaintext password or plaintext note/notebook content.
      ========================================================================== */
 
   var StorageService = {
@@ -799,17 +900,10 @@
       if (!isValidVaultShape(data)) return { ok: false, reason: 'corrupted' };
       return { ok: true, data: migrateVault(data) };
     },
-    save: function (vaultObj) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(vaultObj));
-    },
-    clear: function () {
-      localStorage.removeItem(STORAGE_KEY);
-    }
+    save: function (vaultObj) { localStorage.setItem(STORAGE_KEY, JSON.stringify(vaultObj)); },
+    clear: function () { localStorage.removeItem(STORAGE_KEY); }
   };
 
-  // Structural validation — catches corruption/tampering at the shape level.
-  // (Corruption inside an individual note's ciphertext is instead caught at
-  // decrypt time, per-note, so one bad note can't take down the whole app.)
   function isValidVaultShape(data) {
     if (!data || typeof data !== 'object') return false;
     if (typeof data.version !== 'number') return false;
@@ -820,28 +914,40 @@
       var n = data.notes[i];
       if (!n || typeof n.id !== 'string' || typeof n.iv !== 'string' || typeof n.ciphertext !== 'string') return false;
     }
+    // `notebooks` was introduced in schema v2 — older (v1) data legitimately
+    // won't have it yet; migrateVault() fills in an empty array for those.
+    if (data.notebooks !== undefined) {
+      if (!Array.isArray(data.notebooks)) return false;
+      for (var j = 0; j < data.notebooks.length; j++) {
+        var nb = data.notebooks[j];
+        if (!nb || typeof nb.id !== 'string' || typeof nb.iv !== 'string' || typeof nb.ciphertext !== 'string') return false;
+      }
+    }
     if (!data.settings || typeof data.settings !== 'object') return false;
     return true;
   }
 
   // Schema is versioned so a future release can transform older data safely
-  // without breaking existing installs. Only v1 exists today.
+  // without breaking existing installs.
   function migrateVault(data) {
-    if (data.version === DATA_VERSION) return data;
-    // Example for later: if (data.version === 1) { ...transform...; data.version = 2; }
+    if (!Array.isArray(data.notebooks)) data.notebooks = [];
+    if (data.version < DATA_VERSION) data.version = DATA_VERSION;
     return data;
   }
 
   /* ============================== APP STATE ============================== */
-  // Everything decrypted lives only here, in memory, for as long as the app
-  // is unlocked. lockApp() below wipes all of it.
 
   var state = {
     unlocked: false,
-    cryptoKey: null,           // CryptoKey — non-extractable, cleared on lock
-    vaultMeta: null,           // { kdf, verifier } for the currently active password
-    notes: [],                 // decrypted: [{ id, title, body, createdAt, updatedAt, _corrupted? }]
+    cryptoKey: null,
+    vaultMeta: null,
+    notes: [],                     // decrypted: [{ id, title, body, notebookId, createdAt, updatedAt, _corrupted? }]
+    notebooks: [],                 // decrypted: [{ id, name, createdAt, updatedAt, _corrupted? }]
     activeNoteId: null,
+    activeNotebookId: 'all',       // 'all' | notebookId
+    expandedNotebookIds: new Set(),
+    currentView: 'home',           // 'home' | 'settings'
+    sidebarOpen: true,
     searchQuery: '',
     settings: { autoLockMinutes: 5, theme: 'auto' },
     dirty: false,
@@ -849,14 +955,10 @@
     autoLockTimeoutId: null
   };
 
-  // Mirrors exactly what's persisted per note: id -> { iv, ciphertext }.
-  // Lets us re-encrypt only the note that actually changed, instead of
-  // every note, on every autosave.
-  var encryptedCache = {};
-
-  // id -> <li> element, so the notes list can be updated in place instead
-  // of being fully rebuilt on every keystroke.
-  var noteElements = {};
+  var noteCipherCache = {};       // note id -> { iv, ciphertext }, mirrors on-disk ciphertext
+  var notebookCipherCache = {};   // notebook id -> { iv, ciphertext }
+  var homeRowElements = {};       // note id -> row element in the home overview list
+  var sidebarNoteElements = {};   // note id -> nested tree entry element (only for expanded notebooks)
 
   /* ============================== DOM REFERENCES ============================== */
 
@@ -874,30 +976,45 @@
   var corruptedResetBtn = document.getElementById('corrupted-reset-btn');
 
   var appShellEl = document.getElementById('app-shell');
+  var sidebarEl = document.getElementById('sidebar');
+  var sidebarBackdropEl = document.getElementById('sidebar-backdrop');
+  var sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
   var lockBtnEl = document.getElementById('lock-btn');
-  var navTabs = document.querySelectorAll('.nav-tab');
-  var notesViewEl = document.querySelector('[data-view="notes"]');
-
+  var sidebarTreeEl = document.getElementById('sidebar-tree');
   var searchInput = document.getElementById('search-input');
   var newNoteBtn = document.getElementById('new-note-btn');
-  var emptyNewNoteBtn = document.getElementById('empty-new-note-btn');
-  var notesListEl = document.getElementById('notes-list');
+  var newNotebookBtn = document.getElementById('new-notebook-btn');
+  var settingsNavBtn = document.getElementById('settings-nav-btn');
+  var notebookContextMenuEl = document.getElementById('notebook-context-menu');
+  var notebookRenameBtn = document.getElementById('notebook-rename-btn');
+  var notebookDeleteBtn = document.getElementById('notebook-delete-btn');
+
+  var homeViewEl = document.getElementById('view-home');
+  var homeOverviewEl = document.getElementById('home-overview');
+  var overviewTitleEl = document.getElementById('overview-title');
+  var overviewCountEl = document.getElementById('overview-count');
+  var newNoteBtnHome = document.getElementById('new-note-btn-home');
+  var notesRowsEl = document.getElementById('notes-rows');
   var notesEmptyStateEl = document.getElementById('notes-empty-state');
+  var emptyStateTextEl = document.getElementById('empty-state-text');
+  var emptyNewNoteBtn = document.getElementById('empty-new-note-btn');
   var noResultsEl = document.getElementById('no-results-msg');
 
-  var editorPlaceholderEl = document.getElementById('editor-placeholder');
   var editorContentEl = document.getElementById('editor-content');
-  var backToListBtn = document.getElementById('back-to-list-btn');
+  var backToOverviewBtn = document.getElementById('back-to-overview-btn');
+  var backLabelEl = document.getElementById('back-label');
+  var noteNotebookSelect = document.getElementById('note-notebook-select');
   var saveIndicatorEl = document.getElementById('save-indicator');
   var deleteNoteBtn = document.getElementById('delete-note-btn');
   var noteTitleInput = document.getElementById('note-title-input');
   var noteBodyInput = document.getElementById('note-body-input');
 
+  var settingsViewEl = document.getElementById('view-settings');
+  var settingsBackBtn = document.getElementById('settings-back-btn');
   var exportBtn = document.getElementById('export-btn');
   var importFileInput = document.getElementById('import-file-input');
   var importBtn = document.getElementById('import-btn');
   var importStatusEl = document.getElementById('import-status');
-
   var autolockInput = document.getElementById('autolock-input');
   var changePasswordForm = document.getElementById('change-password-form');
   var currentPasswordInput = document.getElementById('current-password-input');
@@ -908,26 +1025,17 @@
 
   /* ============================== SMALL HELPERS ============================== */
 
-  function showStatus(el, msg, kind) {
-    el.textContent = msg;
-    el.className = 'status-msg' + (kind ? ' status-' + kind : '');
-  }
+  function showStatus(el, msg, kind) { el.textContent = msg; el.className = 'status-msg' + (kind ? ' status-' + kind : ''); }
 
   function setSubmitBusy(formEl, busy, busyText) {
     var btn = formEl.querySelector('button[type="submit"]');
     if (!btn) return;
-    if (busy) {
-      btn.dataset.originalText = btn.textContent;
-      btn.textContent = busyText || 'Please wait…';
-      btn.disabled = true;
-    } else {
-      btn.textContent = btn.dataset.originalText || btn.textContent;
-      btn.disabled = false;
-    }
+    if (busy) { btn.dataset.originalText = btn.textContent; btn.textContent = busyText || 'Please wait…'; btn.disabled = true; }
+    else { btn.textContent = btn.dataset.originalText || btn.textContent; btn.disabled = false; }
   }
 
   function snippet(text, len) {
-    len = len || 90;
+    len = len || 120;
     var clean = (text || '').replace(/\s+/g, ' ').trim();
     return clean.length > len ? clean.slice(0, len) + '…' : clean;
   }
@@ -950,15 +1058,51 @@
     for (var i = 0; i < state.notes.length; i++) if (state.notes[i].id === id) return state.notes[i];
     return null;
   }
+  function findNotebook(id) {
+    for (var i = 0; i < state.notebooks.length; i++) if (state.notebooks[i].id === id) return state.notebooks[i];
+    return null;
+  }
+  function getNotesForNotebook(notebookId) {
+    if (notebookId === 'all') return state.notes.slice();
+    return state.notes.filter(function (n) { return (n.notebookId || null) === notebookId; });
+  }
+  function isMobileViewport() { return window.matchMedia('(max-width: 768px)').matches; }
 
   /* ============================== THEME ============================== */
 
   function applyThemeToDOM(theme) {
     document.documentElement.setAttribute('data-theme', theme);
-    var buttons = document.querySelectorAll('[data-theme-choice]');
-    for (var i = 0; i < buttons.length; i++) {
-      buttons[i].classList.toggle('active', buttons[i].dataset.themeChoice === theme);
-    }
+    document.querySelectorAll('.theme-picker').forEach(function (wrapper) {
+      var iconEl = wrapper.querySelector('.theme-picker-icon');
+      var def = THEME_DEFS.filter(function (d) { return d.id === theme; })[0] || THEME_DEFS[0];
+      if (iconEl) iconEl.innerHTML = iconMarkup(def.icon);
+      wrapper.querySelectorAll('.theme-picker-menu button').forEach(function (b) {
+        b.classList.toggle('selected', b.dataset.themeChoice === theme);
+      });
+    });
+  }
+
+  function buildThemeMenus() {
+    document.querySelectorAll('.theme-picker-menu').forEach(function (menu) {
+      menu.innerHTML = '';
+      THEME_DEFS.forEach(function (def) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.dataset.themeChoice = def.id;
+        var icon = document.createElement('span');
+        icon.className = 'icon icon-sm';
+        icon.innerHTML = iconMarkup(def.icon);
+        var label = document.createElement('span');
+        label.textContent = def.label;
+        btn.appendChild(icon);
+        btn.appendChild(label);
+        btn.addEventListener('click', function () {
+          setTheme(def.id);
+          closeAllPopovers();
+        });
+        menu.appendChild(btn);
+      });
+    });
   }
 
   // Theme preference is stored in plaintext (it's not sensitive) at the top
@@ -975,151 +1119,421 @@
     }
   }
 
-  /* ============================== SCREEN / TAB SWITCHING ============================== */
+  /* ============================== POPOVERS (theme menu + notebook menu) ============================== */
+
+  function closeAllPopovers() {
+    document.querySelectorAll('.theme-picker-menu').forEach(function (m) { m.hidden = true; });
+    document.querySelectorAll('.theme-picker-btn').forEach(function (b) { b.setAttribute('aria-expanded', 'false'); });
+    notebookContextMenuEl.hidden = true;
+  }
+
+  function initThemePickers() {
+    document.querySelectorAll('[data-theme-picker]').forEach(function (wrapper) {
+      var btn = wrapper.querySelector('.theme-picker-btn');
+      var menu = wrapper.querySelector('.theme-picker-menu');
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var wasOpen = !menu.hidden;
+        closeAllPopovers();
+        if (!wasOpen) { menu.hidden = false; btn.setAttribute('aria-expanded', 'true'); }
+      });
+    });
+  }
+
+  document.addEventListener('click', closeAllPopovers);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAllPopovers(); });
+
+  /* ============================== SIDEBAR FOLD ============================== */
+
+  function applySidebarState() {
+    sidebarEl.classList.toggle('sidebar-closed', !state.sidebarOpen);
+    sidebarBackdropEl.classList.toggle('visible', state.sidebarOpen && isMobileViewport());
+    sidebarToggleBtn.classList.toggle('active', state.sidebarOpen);
+  }
+  function toggleSidebar() { state.sidebarOpen = !state.sidebarOpen; applySidebarState(); }
+  function closeSidebarIfMobile() {
+    if (isMobileViewport() && state.sidebarOpen) { state.sidebarOpen = false; applySidebarState(); }
+  }
+
+  /* ============================== SCREEN / VIEW SWITCHING ============================== */
 
   function showLockedScreen(mode) {
     appShellEl.classList.add('hidden');
     lockedScreenEl.classList.remove('hidden');
     lockBtnEl.classList.add('hidden');
+    sidebarToggleBtn.classList.add('hidden');
     setupSectionEl.hidden = mode !== 'setup';
     unlockSectionEl.hidden = mode !== 'unlock';
     corruptedSectionEl.hidden = mode !== 'corrupted';
-    if (mode === 'unlock') {
-      setTimeout(function () { unlockPasswordInput.focus(); }, 30);
-    }
+    if (mode === 'unlock') setTimeout(function () { unlockPasswordInput.focus(); }, 30);
   }
 
   function showApp() {
     lockedScreenEl.classList.add('hidden');
     appShellEl.classList.remove('hidden');
     lockBtnEl.classList.remove('hidden');
+    sidebarToggleBtn.classList.remove('hidden');
   }
 
-  function switchTab(tab) {
-    for (var i = 0; i < navTabs.length; i++) {
-      navTabs[i].classList.toggle('active', navTabs[i].dataset.tab === tab);
+  function switchMainView(view) {
+    state.currentView = view;
+    homeViewEl.hidden = view !== 'home';
+    settingsViewEl.hidden = view !== 'settings';
+    settingsNavBtn.classList.toggle('active', view === 'settings');
+    if (view === 'settings') autolockInput.value = state.settings.autoLockMinutes || 5;
+    renderSidebarTree();
+  }
+
+  /* ============================== SIDEBAR TREE RENDERING ============================== */
+
+  function renderSidebarTree() {
+    sidebarTreeEl.innerHTML = '';
+    sidebarNoteElements = {};
+
+    var allRow = document.createElement('div');
+    allRow.className = 'tree-item all-notes-row' + (state.activeNotebookId === 'all' && state.currentView === 'home' ? ' active' : '');
+    var allIcon = document.createElement('span');
+    allIcon.className = 'tree-icon';
+    allIcon.innerHTML = iconMarkup('noteDoc');
+    var allLabel = document.createElement('span');
+    allLabel.className = 'tree-label';
+    allLabel.textContent = 'All Notes';
+    var allCount = document.createElement('span');
+    allCount.className = 'tree-count';
+    allCount.textContent = state.notes.length;
+    allRow.appendChild(allIcon); allRow.appendChild(allLabel); allRow.appendChild(allCount);
+    sidebarTreeEl.appendChild(allRow);
+
+    var sortedNotebooks = state.notebooks.slice().sort(function (a, b) { return a.name.localeCompare(b.name); });
+    sortedNotebooks.forEach(function (nb) {
+      var group = document.createElement('div');
+      group.className = 'notebook-group';
+
+      var count = getNotesForNotebook(nb.id).length;
+      var expanded = state.expandedNotebookIds.has(nb.id);
+      var isActive = state.activeNotebookId === nb.id && state.currentView === 'home';
+
+      var row = document.createElement('div');
+      row.className = 'tree-item notebook-row' + (isActive ? ' active' : '');
+      row.dataset.id = nb.id;
+
+      var chevron = document.createElement('button');
+      chevron.type = 'button';
+      chevron.className = 'notebook-expand' + (expanded ? ' expanded' : '');
+      chevron.setAttribute('aria-label', 'Expand notebook');
+      chevron.innerHTML = iconMarkup('chevronRight');
+
+      var folderIcon = document.createElement('span');
+      folderIcon.className = 'tree-icon';
+      folderIcon.innerHTML = iconMarkup('notebookFolder');
+
+      var label = document.createElement('span');
+      label.className = 'tree-label';
+      label.textContent = nb.name || 'Untitled notebook';
+
+      var countEl = document.createElement('span');
+      countEl.className = 'tree-count';
+      countEl.textContent = count;
+
+      var kebab = document.createElement('button');
+      kebab.type = 'button';
+      kebab.className = 'notebook-kebab';
+      kebab.setAttribute('aria-label', 'Notebook options');
+      kebab.innerHTML = iconMarkup('kebab');
+
+      row.appendChild(chevron); row.appendChild(folderIcon); row.appendChild(label); row.appendChild(countEl); row.appendChild(kebab);
+      group.appendChild(row);
+
+      if (expanded) {
+        var nestedWrap = document.createElement('div');
+        nestedWrap.className = 'notebook-nested';
+        var notesInNb = getNotesForNotebook(nb.id).slice().sort(function (a, b) { return b.updatedAt - a.updatedAt; });
+        if (notesInNb.length === 0) {
+          var emptyHint = document.createElement('div');
+          emptyHint.className = 'tree-nested-empty';
+          emptyHint.textContent = 'No notes';
+          nestedWrap.appendChild(emptyHint);
+        } else {
+          notesInNb.forEach(function (n) {
+            var item = document.createElement('div');
+            item.className = 'tree-note-item' + (state.activeNoteId === n.id ? ' active' : '');
+            item.dataset.noteId = n.id;
+            item.textContent = n.title.trim() || 'Untitled';
+            nestedWrap.appendChild(item);
+            sidebarNoteElements[n.id] = item;
+          });
+        }
+        group.appendChild(nestedWrap);
+      }
+
+      sidebarTreeEl.appendChild(group);
+    });
+  }
+
+  // Event delegation: the tree is rebuilt often, so it's simpler and more
+  // robust to bind one listener here than to re-bind per row every render.
+  sidebarTreeEl.addEventListener('click', function (e) {
+    var kebabBtn = e.target.closest('.notebook-kebab');
+    if (kebabBtn) { e.stopPropagation(); openNotebookContextMenu(kebabBtn); return; }
+
+    var chevronBtn = e.target.closest('.notebook-expand');
+    if (chevronBtn) { e.stopPropagation(); toggleNotebookExpanded(chevronBtn.closest('.notebook-row').dataset.id); return; }
+
+    var nestedNote = e.target.closest('.tree-note-item');
+    if (nestedNote) {
+      var notebookId = nestedNote.closest('.notebook-group').querySelector('.notebook-row').dataset.id;
+      openNoteFromSidebar(nestedNote.dataset.noteId, notebookId);
+      return;
     }
-    var views = document.querySelectorAll('.content > .view');
-    for (var j = 0; j < views.length; j++) {
-      views[j].hidden = views[j].dataset.view !== tab;
-    }
-    if (tab === 'settings') {
-      autolockInput.value = state.settings.autoLockMinutes || 5;
-    }
+
+    var allNotesRow = e.target.closest('.all-notes-row');
+    if (allNotesRow) { selectNotebook('all'); return; }
+
+    var notebookRow = e.target.closest('.notebook-row');
+    if (notebookRow) { selectNotebook(notebookRow.dataset.id); return; }
+  });
+
+  function toggleNotebookExpanded(id) {
+    if (state.expandedNotebookIds.has(id)) state.expandedNotebookIds.delete(id);
+    else state.expandedNotebookIds.add(id);
+    renderSidebarTree();
   }
 
-  /* ============================== NOTES LIST RENDERING ==============================
-     Rendering strategy: a full rebuild only happens when the set of notes
-     changes shape (unlock, create, delete, import). Ordinary typing just
-     patches the text inside the one relevant <li>, and a completed autosave
-     moves that single <li> to the top — nothing else in the list is
-     touched, which keeps things responsive even with many/long notes. */
-
-  function createListItemElement(note) {
-    var li = document.createElement('li');
-    li.className = 'note-item';
-    li.dataset.id = note.id;
-    li.innerHTML =
-      '<div class="note-item-title"></div>' +
-      '<div class="note-item-snippet"></div>' +
-      '<div class="note-item-time"></div>';
-    updateListItemContent(li, note);
-    li.addEventListener('click', function () { selectNote(note.id); });
-    return li;
+  function selectNotebook(id) {
+    flushPendingSaveIfAny();
+    state.activeNotebookId = id;
+    if (id !== 'all') state.expandedNotebookIds.add(id);
+    deselectNoteInternal();
+    switchMainView('home');
+    renderHomeOverview();
+    closeSidebarIfMobile();
   }
 
-  function updateListItemContent(li, note) {
-    li.querySelector('.note-item-title').textContent = note.title.trim() || 'Untitled';
-    li.querySelector('.note-item-snippet').textContent = snippet(note.body);
-    li.querySelector('.note-item-time').textContent = formatRelativeTime(note.updatedAt);
-    li.classList.toggle('active', state.activeNoteId === note.id);
-    li.classList.toggle('corrupted', !!note._corrupted);
+  function openNoteFromSidebar(noteId, notebookId) {
+    state.activeNotebookId = notebookId;
+    switchMainView('home');
+    selectNote(noteId);
   }
 
-  function renderFullNotesList() {
-    notesListEl.innerHTML = '';
-    noteElements = {};
-    var sorted = state.notes.slice().sort(function (a, b) { return b.updatedAt - a.updatedAt; });
-    for (var i = 0; i < sorted.length; i++) {
-      var li = createListItemElement(sorted[i]);
-      notesListEl.appendChild(li);
-      noteElements[sorted[i].id] = li;
-    }
-    applySearchFilter();
-    toggleEmptyState();
+  function openNotebookContextMenu(kebabBtn) {
+    var notebookId = kebabBtn.closest('.notebook-row').dataset.id;
+    var wasOpenForSame = !notebookContextMenuEl.hidden && notebookContextMenuEl.dataset.notebookId === notebookId;
+    closeAllPopovers();
+    if (wasOpenForSame) return;
+    var rect = kebabBtn.getBoundingClientRect();
+    notebookContextMenuEl.style.top = (rect.bottom + 4) + 'px';
+    notebookContextMenuEl.style.left = Math.min(rect.left, window.innerWidth - 170) + 'px';
+    notebookContextMenuEl.dataset.notebookId = notebookId;
+    notebookContextMenuEl.hidden = false;
   }
 
-  function onNoteEditingLive(note) {
-    var li = noteElements[note.id];
-    if (!li) return;
-    li.querySelector('.note-item-title').textContent = note.title.trim() || 'Untitled';
-    li.querySelector('.note-item-snippet').textContent = snippet(note.body);
+  /* ============================== NOTEBOOK CRUD ============================== */
+
+  function populateNotebookSelect() {
+    noteNotebookSelect.innerHTML = '';
+    var noneOpt = document.createElement('option');
+    noneOpt.value = '';
+    noneOpt.textContent = 'No notebook';
+    noteNotebookSelect.appendChild(noneOpt);
+    state.notebooks.slice().sort(function (a, b) { return a.name.localeCompare(b.name); }).forEach(function (nb) {
+      var opt = document.createElement('option');
+      opt.value = nb.id;
+      opt.textContent = nb.name;
+      noteNotebookSelect.appendChild(opt);
+    });
   }
 
-  function onNoteSaved(note) {
-    var li = noteElements[note.id];
-    if (!li) { renderFullNotesList(); return; }
-    updateListItemContent(li, note);
-    if (notesListEl.firstChild !== li) notesListEl.insertBefore(li, notesListEl.firstChild);
-    applySearchFilter();
+  function persistNotebook(nb) {
+    var payload = { name: nb.name, createdAt: nb.createdAt, updatedAt: nb.updatedAt };
+    return CryptoService.encryptJSON(state.cryptoKey, payload).then(function (enc) {
+      notebookCipherCache[nb.id] = enc;
+      writeVaultToStorage();
+    });
   }
 
-  function applySearchFilter() {
+  function createNewNotebook() {
+    var name = window.prompt('Notebook name');
+    if (name === null) return;
+    var trimmed = name.trim();
+    if (!trimmed) return;
+    var now = Date.now();
+    var nb = { id: generateId(), name: trimmed.slice(0, 120), createdAt: now, updatedAt: now };
+    state.notebooks.push(nb);
+    persistNotebook(nb).then(function () {
+      state.expandedNotebookIds.add(nb.id);
+      populateNotebookSelect();
+      selectNotebook(nb.id);
+    });
+  }
+
+  function handleNotebookRename() {
+    var id = notebookContextMenuEl.dataset.notebookId;
+    var nb = findNotebook(id);
+    closeAllPopovers();
+    if (!nb) return;
+    var newName = window.prompt('Rename notebook', nb.name);
+    if (newName === null) return;
+    var trimmed = newName.trim();
+    if (!trimmed) return;
+    nb.name = trimmed.slice(0, 120);
+    nb.updatedAt = Date.now();
+    persistNotebook(nb).then(function () {
+      renderSidebarTree();
+      if (state.activeNotebookId === id) overviewTitleEl.textContent = nb.name;
+      populateNotebookSelect();
+    });
+  }
+
+  function handleNotebookDelete() {
+    var id = notebookContextMenuEl.dataset.notebookId;
+    var nb = findNotebook(id);
+    closeAllPopovers();
+    if (!nb) return;
+    var count = getNotesForNotebook(id).length;
+    var msg = 'Delete notebook "' + nb.name + '"? ' +
+      (count > 0 ? (count + ' note(s) inside will move to All Notes, not be deleted. ') : '') +
+      'This cannot be undone.';
+    if (!window.confirm(msg)) return;
+
+    var reassignPromises = [];
+    state.notes.forEach(function (n) {
+      if ((n.notebookId || null) === id) {
+        n.notebookId = null;
+        reassignPromises.push(persistNote(n));
+      }
+    });
+    state.notebooks = state.notebooks.filter(function (n) { return n.id !== id; });
+    delete notebookCipherCache[id];
+    state.expandedNotebookIds.delete(id);
+
+    Promise.all(reassignPromises).then(function () {
+      if (state.activeNotebookId === id) { selectNotebook('all'); }
+      else { renderSidebarTree(); renderHomeOverview(); }
+      writeVaultToStorage();
+      populateNotebookSelect();
+    });
+  }
+
+  /* ============================== HOME OVERVIEW RENDERING ============================== */
+
+  function renderHomeOverview() {
+    var notebook = state.activeNotebookId !== 'all' ? findNotebook(state.activeNotebookId) : null;
+    overviewTitleEl.textContent = notebook ? notebook.name : 'All Notes';
+
     var q = state.searchQuery.trim().toLowerCase();
-    var anyVisible = false;
-    for (var id in noteElements) {
-      if (!noteElements.hasOwnProperty(id)) continue;
-      var note = findNote(id);
-      var li = noteElements[id];
-      var match = !q || (note && (note.title.toLowerCase().indexOf(q) !== -1 || note.body.toLowerCase().indexOf(q) !== -1));
-      li.hidden = !match;
-      if (match) anyVisible = true;
+    var scoped = getNotesForNotebook(state.activeNotebookId);
+    var list = scoped.filter(function (n) {
+      return !q || n.title.toLowerCase().indexOf(q) !== -1 || n.body.toLowerCase().indexOf(q) !== -1;
+    }).sort(function (a, b) { return b.updatedAt - a.updatedAt; });
+
+    overviewCountEl.textContent = list.length + (list.length === 1 ? ' note' : ' notes');
+
+    notesRowsEl.innerHTML = '';
+    homeRowElements = {};
+    list.forEach(function (note) {
+      var row = createHomeRowElement(note);
+      notesRowsEl.appendChild(row);
+      homeRowElements[note.id] = row;
+    });
+
+    if (scoped.length === 0) {
+      notesEmptyStateEl.hidden = false;
+      notesRowsEl.hidden = true;
+      noResultsEl.hidden = true;
+      emptyStateTextEl.textContent = notebook ? ('No notes in "' + notebook.name + '" yet.') : 'No notes yet.';
+    } else if (list.length === 0) {
+      notesEmptyStateEl.hidden = true;
+      notesRowsEl.hidden = true;
+      noResultsEl.hidden = false;
+    } else {
+      notesEmptyStateEl.hidden = true;
+      notesRowsEl.hidden = false;
+      noResultsEl.hidden = true;
     }
-    noResultsEl.hidden = !q || anyVisible || state.notes.length === 0;
   }
 
-  function toggleEmptyState() {
-    var hasNotes = state.notes.length > 0;
-    notesEmptyStateEl.hidden = hasNotes;
-    notesListEl.hidden = !hasNotes;
+  function createHomeRowElement(note) {
+    var row = document.createElement('div');
+    row.className = 'note-row' + (note._corrupted ? ' corrupted' : '');
+    row.dataset.id = note.id;
+
+    var top = document.createElement('div');
+    top.className = 'note-row-top';
+    var title = document.createElement('span');
+    title.className = 'note-row-title';
+    title.textContent = note.title.trim() || 'Untitled';
+    var time = document.createElement('span');
+    time.className = 'note-row-time';
+    time.textContent = formatRelativeTime(note.updatedAt);
+    top.appendChild(title); top.appendChild(time);
+
+    var snip = document.createElement('div');
+    snip.className = 'note-row-snippet';
+    snip.textContent = snippet(note.body, 140);
+
+    row.appendChild(top); row.appendChild(snip);
+    row.addEventListener('click', function () { selectNote(note.id); });
+    return row;
+  }
+
+  // Patches the home row + sidebar nested entry for one note in place,
+  // instead of rebuilding either list, so typing stays responsive even
+  // with many/long notes. opts.moveToTop is set once a save completes
+  // (the note's updatedAt changed, so its position may need to change too).
+  function syncNoteUI(note, opts) {
+    opts = opts || {};
+    var row = homeRowElements[note.id];
+    if (row) {
+      row.querySelector('.note-row-title').textContent = note.title.trim() || 'Untitled';
+      row.querySelector('.note-row-snippet').textContent = snippet(note.body, 140);
+      if (opts.moveToTop) {
+        row.querySelector('.note-row-time').textContent = formatRelativeTime(note.updatedAt);
+        if (notesRowsEl.firstChild !== row) notesRowsEl.insertBefore(row, notesRowsEl.firstChild);
+      }
+    }
+    var navEntry = sidebarNoteElements[note.id];
+    if (navEntry) navEntry.textContent = note.title.trim() || 'Untitled';
   }
 
   /* ============================== EDITOR ============================== */
 
+  function deselectNoteInternal() {
+    state.activeNoteId = null;
+    editorContentEl.classList.add('hidden');
+    homeOverviewEl.classList.remove('hidden');
+  }
+
+  function updateBackLabel() {
+    var nb = state.activeNotebookId !== 'all' ? findNotebook(state.activeNotebookId) : null;
+    backLabelEl.textContent = nb ? nb.name : 'All Notes';
+  }
+
   function selectNote(id) {
     flushPendingSaveIfAny();
-    state.activeNoteId = id;
     var note = findNote(id);
     if (!note) return;
+    state.activeNoteId = id;
 
-    editorPlaceholderEl.classList.add('hidden');
+    homeOverviewEl.classList.add('hidden');
     editorContentEl.classList.remove('hidden');
     noteTitleInput.value = note.title;
     noteBodyInput.value = note.body;
+    noteNotebookSelect.value = note.notebookId || '';
     setSaveIndicator('idle');
-
-    for (var key in noteElements) {
-      if (noteElements.hasOwnProperty(key)) noteElements[key].classList.remove('active');
-    }
-    if (noteElements[id]) noteElements[id].classList.add('active');
-
-    notesViewEl.classList.add('mobile-show-editor');
-  }
-
-  function deselectNote() {
-    state.activeNoteId = null;
-    editorContentEl.classList.add('hidden');
-    editorPlaceholderEl.classList.remove('hidden');
-    notesViewEl.classList.remove('mobile-show-editor');
+    updateBackLabel();
+    renderSidebarTree();
+    closeSidebarIfMobile();
   }
 
   function createNewNote() {
     flushPendingSaveIfAny();
     var now = Date.now();
-    var note = { id: generateId(), title: '', body: '', createdAt: now, updatedAt: now };
+    var notebookId = state.activeNotebookId !== 'all' ? state.activeNotebookId : null;
+    var note = { id: generateId(), title: '', body: '', notebookId: notebookId, createdAt: now, updatedAt: now };
     state.notes.push(note);
     persistNote(note).then(function () {
-      renderFullNotesList();
+      renderSidebarTree();
+      renderHomeOverview();
       selectNote(note.id);
       noteTitleInput.focus();
     });
@@ -1130,16 +1544,13 @@
     if (!window.confirm('Delete this note? This cannot be undone.')) return;
     var id = state.activeNoteId;
     state.notes = state.notes.filter(function (n) { return n.id !== id; });
-    delete encryptedCache[id];
+    delete noteCipherCache[id];
     writeVaultToStorage();
-
     clearTimeout(state.saveTimer);
     state.dirty = false;
-    deselectNote();
-
-    if (noteElements[id]) noteElements[id].remove();
-    delete noteElements[id];
-    toggleEmptyState();
+    deselectNoteInternal();
+    renderSidebarTree();
+    renderHomeOverview();
   }
 
   function onEditorInput() {
@@ -1148,56 +1559,69 @@
     note.title = noteTitleInput.value;
     note.body = noteBodyInput.value;
     state.dirty = true;
-    onNoteEditingLive(note);
+    syncNoteUI(note, {});
     setSaveIndicator('editing');
     clearTimeout(state.saveTimer);
     state.saveTimer = setTimeout(flushPendingSaveIfAny, 500);
   }
 
+  function onNotebookSelectChange() {
+    var note = findNote(state.activeNoteId);
+    if (!note) return;
+    note.notebookId = noteNotebookSelect.value || null;
+    note.updatedAt = Date.now();
+    persistNote(note).then(function () { renderSidebarTree(); });
+  }
+
   var saveIndicatorFadeTimer = null;
   function setSaveIndicator(kind) {
     clearTimeout(saveIndicatorFadeTimer);
-    saveIndicatorEl.classList.remove('editing', 'saving', 'saved', 'error');
+    saveIndicatorEl.classList.remove('error');
     if (kind === 'editing') {
-      saveIndicatorEl.textContent = 'Editing…';
-      saveIndicatorEl.classList.add('editing');
+      saveIndicatorEl.innerHTML = '';
+      saveIndicatorEl.appendChild(document.createTextNode('Editing…'));
     } else if (kind === 'saving') {
-      saveIndicatorEl.textContent = 'Saving…';
-      saveIndicatorEl.classList.add('saving');
+      saveIndicatorEl.innerHTML = '';
+      saveIndicatorEl.appendChild(document.createTextNode('Saving…'));
     } else if (kind === 'saved') {
-      saveIndicatorEl.textContent = 'Saved ✓';
-      saveIndicatorEl.classList.add('saved');
-      saveIndicatorFadeTimer = setTimeout(function () { saveIndicatorEl.textContent = ''; }, 2000);
+      saveIndicatorEl.innerHTML = '';
+      var ic = document.createElement('span'); ic.className = 'icon icon-sm'; ic.innerHTML = iconMarkup('check');
+      saveIndicatorEl.appendChild(ic);
+      saveIndicatorEl.appendChild(document.createTextNode('Saved'));
+      saveIndicatorFadeTimer = setTimeout(function () { saveIndicatorEl.innerHTML = ''; }, 2200);
     } else if (kind === 'error') {
-      saveIndicatorEl.textContent = 'Error saving — will retry on next change';
+      saveIndicatorEl.innerHTML = '';
+      saveIndicatorEl.appendChild(document.createTextNode('Error saving — will retry on next change'));
       saveIndicatorEl.classList.add('error');
     } else {
-      saveIndicatorEl.textContent = '';
+      saveIndicatorEl.innerHTML = '';
     }
   }
 
-  /* ============================== PERSISTENCE (encrypt + save) ============================== */
+  /* ============================== PERSISTENCE ============================== */
 
-  // Encrypts one note and updates the cache that mirrors on-disk ciphertext,
-  // then writes the whole vault. Only the changed note is re-encrypted —
-  // every other note reuses its already-cached ciphertext.
   function persistNote(note) {
-    var payload = { title: note.title, body: note.body, createdAt: note.createdAt, updatedAt: note.updatedAt };
+    var payload = { title: note.title, body: note.body, notebookId: note.notebookId || null, createdAt: note.createdAt, updatedAt: note.updatedAt };
     return CryptoService.encryptJSON(state.cryptoKey, payload).then(function (enc) {
-      encryptedCache[note.id] = enc;
+      noteCipherCache[note.id] = enc;
       writeVaultToStorage();
     });
   }
 
   function writeVaultToStorage() {
     var notesOut = state.notes.map(function (n) {
-      var enc = encryptedCache[n.id] || { iv: '', ciphertext: '' };
+      var enc = noteCipherCache[n.id] || { iv: '', ciphertext: '' };
       return { id: n.id, iv: enc.iv, ciphertext: enc.ciphertext };
+    });
+    var notebooksOut = state.notebooks.map(function (nb) {
+      var enc = notebookCipherCache[nb.id] || { iv: '', ciphertext: '' };
+      return { id: nb.id, iv: enc.iv, ciphertext: enc.ciphertext };
     });
     var vault = {
       version: DATA_VERSION,
       kdf: state.vaultMeta.kdf,
       verifier: state.vaultMeta.verifier,
+      notebooks: notebooksOut,
       notes: notesOut,
       settings: state.settings
     };
@@ -1214,7 +1638,7 @@
     note.updatedAt = Date.now();
     return persistNote(note).then(function () {
       state.dirty = false;
-      onNoteSaved(note);
+      syncNoteUI(note, { moveToTop: true });
       setSaveIndicator('saved');
     }).catch(function (err) {
       console.error('Save failed', err);
@@ -1227,38 +1651,43 @@
   function doLock() {
     clearTimeout(state.autoLockTimeoutId);
     clearTimeout(state.saveTimer);
+    closeAllPopovers();
 
-    // Wipe every trace of decrypted content from memory and the DOM.
     state.cryptoKey = null;
     state.vaultMeta = null;
     state.notes = [];
+    state.notebooks = [];
     state.activeNoteId = null;
+    state.activeNotebookId = 'all';
+    state.expandedNotebookIds = new Set();
+    state.currentView = 'home';
     state.dirty = false;
     state.unlocked = false;
-    encryptedCache = {};
-    noteElements = {};
-    notesListEl.innerHTML = '';
+    noteCipherCache = {};
+    notebookCipherCache = {};
+    homeRowElements = {};
+    sidebarNoteElements = {};
+
+    sidebarTreeEl.innerHTML = '';
+    notesRowsEl.innerHTML = '';
     noteTitleInput.value = '';
     noteBodyInput.value = '';
     searchInput.value = '';
     state.searchQuery = '';
     editorContentEl.classList.add('hidden');
-    editorPlaceholderEl.classList.remove('hidden');
-    notesViewEl.classList.remove('mobile-show-editor');
+    homeOverviewEl.classList.remove('hidden');
     unlockPasswordInput.value = '';
 
     showLockedScreen('unlock');
   }
 
-  function lockNow() {
-    return flushPendingSaveIfAny().then(doLock);
-  }
+  function lockNow() { return flushPendingSaveIfAny().then(doLock); }
 
   var lastActivityReset = 0;
   function noteActivity() {
     if (!state.unlocked) return;
     var now = Date.now();
-    if (now - lastActivityReset < 1000) return; // throttle high-frequency events
+    if (now - lastActivityReset < 1000) return;
     lastActivityReset = now;
     resetAutoLockTimer();
   }
@@ -1266,6 +1695,21 @@
     clearTimeout(state.autoLockTimeoutId);
     var minutes = (state.settings && state.settings.autoLockMinutes) || 5;
     state.autoLockTimeoutId = setTimeout(function () { lockNow(); }, minutes * 60 * 1000);
+  }
+
+  function enterUnlockedApp() {
+    state.currentView = 'home';
+    state.activeNotebookId = 'all';
+    state.expandedNotebookIds = new Set();
+    state.sidebarOpen = !isMobileViewport();
+    applySidebarState();
+
+    showApp();
+    deselectNoteInternal();
+    populateNotebookSelect();
+    switchMainView('home');
+    renderHomeOverview();
+    resetAutoLockTimer();
   }
 
   function handleSetupSubmit(e) {
@@ -1286,6 +1730,7 @@
           version: DATA_VERSION,
           kdf: { salt: bufToBase64(salt), iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
           verifier: verifier,
+          notebooks: [],
           notes: [],
           settings: { autoLockMinutes: 5, theme: state.settings.theme || 'auto' }
         };
@@ -1294,21 +1739,18 @@
         state.cryptoKey = key;
         state.vaultMeta = { kdf: vault.kdf, verifier: vault.verifier };
         state.notes = [];
+        state.notebooks = [];
         state.settings = vault.settings;
-        encryptedCache = {};
+        noteCipherCache = {};
+        notebookCipherCache = {};
         state.unlocked = true;
 
-        showApp();
-        renderFullNotesList();
-        switchTab('notes');
-        resetAutoLockTimer();
+        enterUnlockedApp();
       });
     }).catch(function (err) {
       console.error(err);
       showStatus(setupStatusEl, 'Something went wrong setting up encryption. Please try again.', 'error');
-    }).then(function () {
-      setSubmitBusy(setupForm, false);
-    });
+    }).then(function () { setSubmitBusy(setupForm, false); });
   }
 
   function handleUnlockSubmit(e) {
@@ -1326,31 +1768,32 @@
 
     CryptoService.deriveKey(pw, saltBytes, vault.kdf.iterations).then(function (derivedKey) {
       key = derivedKey;
-      // Attempt to decrypt the verifier blob. AES-GCM's auth-tag check fails
-      // the same way whether the password is wrong or the data is tampered —
-      // that ambiguity is intentional, so nothing about the failure leaks.
+      // AES-GCM's auth-tag check fails the same way whether the password is
+      // wrong or the data is tampered — that ambiguity is intentional.
       return CryptoService.decryptJSON(key, vault.verifier.iv, vault.verifier.ciphertext);
     }).then(function () {
-      // Password correct — decrypt every note into memory.
-      encryptedCache = {};
+      noteCipherCache = {};
+      notebookCipherCache = {};
       var decryptedNotes = [];
-      var decryptPromises = vault.notes.map(function (n) {
-        encryptedCache[n.id] = { iv: n.iv, ciphertext: n.ciphertext };
+      var decryptedNotebooks = [];
+
+      var notePromises = vault.notes.map(function (n) {
+        noteCipherCache[n.id] = { iv: n.iv, ciphertext: n.ciphertext };
         return CryptoService.decryptJSON(key, n.iv, n.ciphertext).then(function (payload) {
           decryptedNotes.push({
             id: n.id,
             title: payload.title || '',
             body: payload.body || '',
+            notebookId: payload.notebookId || null,
             createdAt: payload.createdAt || 0,
             updatedAt: payload.updatedAt || 0
           });
         }).catch(function () {
-          // This one note is tampered/corrupted — flag it instead of
-          // failing the whole unlock. Editing or deleting it resolves it.
           decryptedNotes.push({
             id: n.id,
             title: '⚠ Corrupted note',
             body: 'This note could not be decrypted. It may have been corrupted or tampered with. You can delete it, or start typing to replace it with fresh, correctly-encrypted content.',
+            notebookId: null,
             createdAt: 0,
             updatedAt: 0,
             _corrupted: true
@@ -1358,28 +1801,38 @@
         });
       });
 
-      return Promise.all(decryptPromises).then(function () {
+      var notebookPromises = vault.notebooks.map(function (nb) {
+        notebookCipherCache[nb.id] = { iv: nb.iv, ciphertext: nb.ciphertext };
+        return CryptoService.decryptJSON(key, nb.iv, nb.ciphertext).then(function (payload) {
+          decryptedNotebooks.push({
+            id: nb.id,
+            name: payload.name || 'Untitled notebook',
+            createdAt: payload.createdAt || 0,
+            updatedAt: payload.updatedAt || 0
+          });
+        }).catch(function () {
+          decryptedNotebooks.push({ id: nb.id, name: '⚠ Corrupted notebook', createdAt: 0, updatedAt: 0, _corrupted: true });
+        });
+      });
+
+      return Promise.all(notePromises.concat(notebookPromises)).then(function () {
         state.cryptoKey = key;
         state.vaultMeta = { kdf: vault.kdf, verifier: vault.verifier };
         state.notes = decryptedNotes;
+        state.notebooks = decryptedNotebooks;
         state.settings = Object.assign({ autoLockMinutes: 5, theme: 'auto' }, vault.settings);
         state.unlocked = true;
 
         unlockPasswordInput.value = '';
-        showApp();
-        renderFullNotesList();
-        switchTab('notes');
-        resetAutoLockTimer();
+        enterUnlockedApp();
       });
     }).catch(function () {
       showStatus(unlockStatusEl, 'Incorrect password. Please try again.', 'error');
-    }).then(function () {
-      setSubmitBusy(unlockForm, false);
-    });
+    }).then(function () { setSubmitBusy(unlockForm, false); });
   }
 
   function eraseAllData() {
-    var ok = window.confirm('This will permanently erase all notes and reset SecureNotes on this device. This cannot be undone. Continue?');
+    var ok = window.confirm('This will permanently erase all notes, notebooks, and settings, and reset SecureNotes on this device. This cannot be undone. Continue?');
     if (!ok) return;
     StorageService.clear();
     location.reload();
@@ -1411,20 +1864,20 @@
     var currentSalt = base64ToBuf(state.vaultMeta.kdf.salt);
 
     CryptoService.deriveKey(current, currentSalt, state.vaultMeta.kdf.iterations).then(function (currentKeyCheck) {
-      // Verify the current password against the existing verifier first.
       return CryptoService.decryptJSON(currentKeyCheck, state.vaultMeta.verifier.iv, state.vaultMeta.verifier.ciphertext);
     }).then(function () {
       var newSalt = CryptoService.generateSalt();
       return CryptoService.deriveKey(next, newSalt, PBKDF2_ITERATIONS).then(function (newKey) {
         return CryptoService.encryptJSON(newKey, { check: VERIFIER_CHECK_VALUE }).then(function (newVerifier) {
-          // Re-encrypt every note with the new key, fresh IV each time.
-          var reencryptPromises = state.notes.map(function (note) {
-            var payload = { title: note.title, body: note.body, createdAt: note.createdAt, updatedAt: note.updatedAt };
-            return CryptoService.encryptJSON(newKey, payload).then(function (enc) {
-              encryptedCache[note.id] = enc;
-            });
+          var notePromises = state.notes.map(function (note) {
+            var payload = { title: note.title, body: note.body, notebookId: note.notebookId || null, createdAt: note.createdAt, updatedAt: note.updatedAt };
+            return CryptoService.encryptJSON(newKey, payload).then(function (enc) { noteCipherCache[note.id] = enc; });
           });
-          return Promise.all(reencryptPromises).then(function () {
+          var notebookPromises = state.notebooks.map(function (nb) {
+            var payload = { name: nb.name, createdAt: nb.createdAt, updatedAt: nb.updatedAt };
+            return CryptoService.encryptJSON(newKey, payload).then(function (enc) { notebookCipherCache[nb.id] = enc; });
+          });
+          return Promise.all(notePromises.concat(notebookPromises)).then(function () {
             state.cryptoKey = newKey;
             state.vaultMeta = {
               kdf: { salt: bufToBase64(newSalt), iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
@@ -1432,15 +1885,13 @@
             };
             writeVaultToStorage();
             changePasswordForm.reset();
-            showStatus(changePasswordStatusEl, 'Master password updated. All notes were re-encrypted.', 'success');
+            showStatus(changePasswordStatusEl, 'Master password updated. All notes and notebooks were re-encrypted.', 'success');
           });
         });
       });
     }).catch(function () {
       showStatus(changePasswordStatusEl, 'Current password is incorrect.', 'error');
-    }).then(function () {
-      setSubmitBusy(changePasswordForm, false);
-    });
+    }).then(function () { setSubmitBusy(changePasswordForm, false); });
   }
 
   /* ============================== BACKUP: EXPORT / IMPORT ============================== */
@@ -1484,17 +1935,83 @@
       );
       if (!ok) return;
 
-      StorageService.save(migrateVault(data));
-      applyThemeToDOM((data.settings && data.settings.theme) || 'auto');
+      var migrated = migrateVault(data);
+      StorageService.save(migrated);
+      applyThemeToDOM((migrated.settings && migrated.settings.theme) || 'auto');
       lockNow().then(function () {
         showStatus(unlockStatusEl, 'Backup imported. Enter the password used at the time of that backup.', 'success');
       });
       importFileInput.value = '';
     };
-    reader.onerror = function () {
-      showStatus(importStatusEl, 'Could not read that file.', 'error');
-    };
+    reader.onerror = function () { showStatus(importStatusEl, 'Could not read that file.', 'error'); };
     reader.readAsText(file);
+  }
+
+  /* ============================== FAVICON PNG FALLBACK ==============================
+     The <link> in <head> already points at an SVG data URI, which every
+     modern evergreen browser accepts. This generates the same mark as a
+     PNG via <canvas> at runtime and adds it as a second favicon link, so
+     browsers that don't support SVG favicons still get an icon. */
+
+  function roundRectPath(ctx, x, y, w, h, r) {
+    if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); return; }
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function generateFaviconPNGFallback() {
+    try {
+      var size = 64;
+      var canvas = document.createElement('canvas');
+      canvas.width = size; canvas.height = size;
+      var ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      var grad = ctx.createLinearGradient(0, 0, size, size);
+      grad.addColorStop(0, '#7186ff');
+      grad.addColorStop(1, '#3f5ce0');
+      ctx.fillStyle = grad;
+      roundRectPath(ctx, 0, 0, size, size, 16);
+      ctx.fill();
+
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(22, 30);
+      ctx.bezierCurveTo(22, 19, 26, 13, 32, 13);
+      ctx.bezierCurveTo(38, 13, 42, 19, 42, 30);
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      roundRectPath(ctx, 16.5, 28, 31, 25, 6.5);
+      ctx.fill();
+
+      ctx.fillStyle = 'rgba(63,92,224,0.92)';
+      ctx.beginPath();
+      ctx.moveTo(39.5, 28); ctx.lineTo(47.5, 28); ctx.lineTo(47.5, 36);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#3f5ce0';
+      ctx.beginPath();
+      ctx.arc(32, 38.4, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      roundRectPath(ctx, 30.5, 40.2, 3, 6.4, 1.5);
+      ctx.fill();
+
+      var link = document.createElement('link');
+      link.rel = 'icon';
+      link.type = 'image/png';
+      link.setAttribute('sizes', '64x64');
+      link.href = canvas.toDataURL('image/png');
+      document.head.appendChild(link);
+    } catch (e) { /* non-critical: the SVG favicon already covers modern browsers */ }
   }
 
   /* ============================== EVENT WIRING ============================== */
@@ -1504,21 +2021,44 @@
     unlockForm.addEventListener('submit', handleUnlockSubmit);
     corruptedResetBtn.addEventListener('click', eraseAllData);
 
+    sidebarToggleBtn.addEventListener('click', toggleSidebar);
+    sidebarBackdropEl.addEventListener('click', function () { state.sidebarOpen = false; applySidebarState(); });
     lockBtnEl.addEventListener('click', lockNow);
-    for (var i = 0; i < navTabs.length; i++) {
-      navTabs[i].addEventListener('click', function (e) { switchTab(e.currentTarget.dataset.tab); });
-    }
 
     newNoteBtn.addEventListener('click', createNewNote);
+    newNoteBtnHome.addEventListener('click', createNewNote);
     emptyNewNoteBtn.addEventListener('click', createNewNote);
+    newNotebookBtn.addEventListener('click', createNewNotebook);
+
+    notebookRenameBtn.addEventListener('click', handleNotebookRename);
+    notebookDeleteBtn.addEventListener('click', handleNotebookDelete);
+
     deleteNoteBtn.addEventListener('click', deleteActiveNote);
-    backToListBtn.addEventListener('click', function () { notesViewEl.classList.remove('mobile-show-editor'); });
+    backToOverviewBtn.addEventListener('click', function () {
+      flushPendingSaveIfAny();
+      deselectNoteInternal();
+      renderHomeOverview();
+      renderSidebarTree();
+    });
     noteTitleInput.addEventListener('input', onEditorInput);
     noteBodyInput.addEventListener('input', onEditorInput);
+    noteNotebookSelect.addEventListener('change', onNotebookSelectChange);
+
+    var searchDebounce = null;
     searchInput.addEventListener('input', function () {
-      state.searchQuery = searchInput.value;
-      applySearchFilter();
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(function () {
+        state.searchQuery = searchInput.value;
+        renderHomeOverview();
+      }, 120);
     });
+
+    settingsNavBtn.addEventListener('click', function () {
+      flushPendingSaveIfAny();
+      switchMainView('settings');
+      closeSidebarIfMobile();
+    });
+    settingsBackBtn.addEventListener('click', function () { switchMainView('home'); });
 
     exportBtn.addEventListener('click', handleExport);
     importBtn.addEventListener('click', handleImport);
@@ -1527,10 +2067,7 @@
     changePasswordForm.addEventListener('submit', handleChangePasswordSubmit);
     resetAppBtn.addEventListener('click', eraseAllData);
 
-    var themeButtons = document.querySelectorAll('[data-theme-choice]');
-    for (var j = 0; j < themeButtons.length; j++) {
-      themeButtons[j].addEventListener('click', function (e) { setTheme(e.currentTarget.dataset.themeChoice); });
-    }
+    initThemePickers();
 
     ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'wheel'].forEach(function (evt) {
       document.addEventListener(evt, noteActivity, { passive: true });
@@ -1539,24 +2076,28 @@
     document.addEventListener('visibilitychange', function () {
       if (document.hidden && state.unlocked) flushPendingSaveIfAny();
     });
+
+    window.addEventListener('resize', function () { if (state.unlocked) applySidebarState(); });
   }
 
   /* ============================== INIT ============================== */
 
   function init() {
+    document.getElementById('brand-logo').innerHTML = LOGO_SVG;
+    document.getElementById('locked-logo').innerHTML = LOGO_SVG;
+    renderStaticIcons(document);
+    buildThemeMenus();
+    generateFaviconPNGFallback();
+
     var loaded = StorageService.load();
     if (loaded.ok) {
       state.settings = Object.assign({ autoLockMinutes: 5, theme: 'auto' }, loaded.data.settings);
     }
     applyThemeToDOM(state.settings.theme);
 
-    if (!loaded.ok && loaded.reason === 'missing') {
-      showLockedScreen('setup');
-    } else if (!loaded.ok) {
-      showLockedScreen('corrupted');
-    } else {
-      showLockedScreen('unlock');
-    }
+    if (!loaded.ok && loaded.reason === 'missing') showLockedScreen('setup');
+    else if (!loaded.ok) showLockedScreen('corrupted');
+    else showLockedScreen('unlock');
 
     wireEvents();
   }
@@ -1565,4 +2106,4 @@
 })();
 </script>
 </body>
-</html>
+                   </html>
