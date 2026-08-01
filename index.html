@@ -394,6 +394,28 @@
   .popover-menu button.danger { color: var(--danger); }
   .popover-menu button.danger:hover { background: color-mix(in srgb, var(--danger) 10%, transparent); }
 
+  /* ---------- In-app modal (replaces native confirm()/prompt()) ---------- */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(10, 10, 16, 0.45);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    z-index: 200;
+  }
+  .modal-box {
+    width: 100%; max-width: 420px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 20px 60px var(--shadow);
+    padding: 24px;
+  }
+  .modal-box h2 { font-size: 17px; margin: 0 0 8px; letter-spacing: -0.01em; }
+  .modal-box .muted { font-size: 13.5px; color: var(--text-muted); line-height: 1.55; margin: 0 0 16px; }
+  .modal-box input { margin-bottom: 4px; }
+  #modal-input:not(.hidden) { margin-bottom: 18px; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+
   /* ---------- Main content ---------- */
   .content { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
   .view { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
@@ -402,13 +424,20 @@
   /* Home view */
   .home-overview { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
   .overview-header {
-    display: flex; align-items: center; gap: 14px;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; row-gap: 8px;
     padding: 20px 28px 16px;
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
   }
   .overview-header h1 { font-size: 21px; margin: 0; letter-spacing: -0.01em; }
   .overview-count { color: var(--text-faint); font-size: 12.5px; font-weight: 600; margin-right: auto; }
+  .sort-select { max-width: 152px; font-size: 12.5px; padding: 7px 10px; }
+
+  .notes-section-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--text-faint); padding: 4px 2px 2px; margin-top: 2px;
+  }
+  .notes-section-label:first-child { margin-top: 0; }
 
   .notes-rows { flex: 1; overflow-y: auto; padding: 16px 28px calc(28px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 8px; }
   .note-row {
@@ -420,11 +449,25 @@
     transition: box-shadow 0.12s ease, border-color 0.12s ease;
   }
   .note-row:hover { box-shadow: 0 4px 18px var(--shadow); border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); }
-  .note-row-top { display: flex; align-items: baseline; gap: 10px; margin-bottom: 3px; }
+  .note-row-top { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
   .note-row-title { font-weight: 700; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .note-row-time { margin-left: auto; font-size: 11.5px; color: var(--text-faint); flex-shrink: 0; font-weight: 600; }
   .note-row-snippet { font-size: 13px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .note-row.corrupted .note-row-title { color: var(--danger); }
+
+  .row-pin-btn {
+    display: flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; flex-shrink: 0;
+    background: transparent; border: none; border-radius: 5px;
+    color: var(--text-faint);
+  }
+  .row-pin-btn:hover { background: var(--bg-hover); color: var(--text-muted); }
+  .row-pin-btn.pinned { color: var(--accent); }
+  .row-pin-btn.pinned:hover { color: var(--accent-hover); }
+
+  .note-row.trash-row { cursor: default; }
+  .note-row.trash-row:hover { box-shadow: none; border-color: var(--border); }
+  .trash-row-actions { display: flex; gap: 8px; margin-top: 10px; }
 
   .empty-state { margin: auto; text-align: center; color: var(--text-muted); font-size: 13.5px; padding: 30px; max-width: 320px; }
   .empty-state .icon-lg { color: var(--text-faint); margin: 0 auto 12px; width: 40px; height: 40px; }
@@ -493,6 +536,7 @@
   .panel label { font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px; }
   #change-password-form { display: flex; flex-direction: column; gap: 10px; max-width: 320px; }
   #autolock-input { max-width: 120px; }
+  #trash-retention-input { max-width: 120px; }
   .danger-zone { border-color: color-mix(in srgb, var(--danger) 35%, var(--border)); }
   .danger-zone h2 { color: var(--danger); }
   .danger-zone h2 .icon { color: var(--danger); }
@@ -616,7 +660,16 @@
               <div class="overview-header">
                 <h1 id="overview-title">All Notes</h1>
                 <span class="overview-count" id="overview-count"></span>
+                <div class="sort-picker" id="sort-picker-wrapper">
+                  <select id="sort-select" class="sort-select" aria-label="Sort notes">
+                    <option value="newest">Newest first</option>
+                    <option value="oldest">Oldest first</option>
+                    <option value="title-asc">Title A–Z</option>
+                    <option value="title-desc">Title Z–A</option>
+                  </select>
+                </div>
                 <button type="button" id="new-note-btn-home" class="btn btn-accent btn-sm"><span class="icon icon-sm" data-icon="plus"></span>New note</button>
+                <button type="button" id="empty-trash-btn" class="btn btn-danger-ghost btn-sm hidden"><span class="icon icon-sm" data-icon="trash"></span>Empty Trash</button>
               </div>
               <div class="notes-rows" id="notes-rows"></div>
               <div class="empty-state" id="notes-empty-state" hidden>
@@ -633,9 +686,10 @@
             <div class="editor-content hidden" id="editor-content">
               <div class="editor-toolbar">
                 <button type="button" class="btn btn-ghost" id="back-to-overview-btn"><span class="icon icon-sm" data-icon="backArrow"></span><span id="back-label">All Notes</span></button>
+                <button type="button" class="icon-btn" id="pin-note-btn" title="Pin note" aria-label="Pin note"><span class="icon" id="pin-note-icon"></span></button>
                 <select id="note-notebook-select" class="notebook-select" aria-label="Notebook"></select>
                 <span class="save-indicator" id="save-indicator"></span>
-                <button type="button" class="btn btn-danger-ghost" id="delete-note-btn"><span class="icon icon-sm" data-icon="trash"></span>Delete</button>
+                <button type="button" class="btn btn-danger-ghost" id="delete-note-btn"><span class="icon icon-sm" data-icon="trash"></span>Trash</button>
               </div>
               <div class="editor-body">
                 <input type="text" id="note-title-input" class="note-title-input" placeholder="Untitled note" aria-label="Note title" maxlength="300">
@@ -672,6 +726,13 @@
               </div>
 
               <div class="panel">
+                <h2><span class="icon" data-icon="trash"></span>Trash</h2>
+                <label for="trash-retention-input">Permanently delete notes in Trash after</label>
+                <input type="number" id="trash-retention-input" min="0" max="365" step="1">
+                <p class="hint">Days after deletion. Checked once each time you unlock. Set to 0 to keep trashed notes indefinitely (no automatic deletion).</p>
+              </div>
+
+              <div class="panel">
                 <h2><span class="icon" data-icon="lock"></span>Change master password</h2>
                 <p class="muted">Re-encrypts all of your notes and notebooks with the new password.</p>
                 <form id="change-password-form">
@@ -699,14 +760,14 @@
               </div>
 
               <div class="panel about-panel">
-                <h2>SecureNotes <span class="version-badge">v1.2.1</span></h2>
+                <h2>SecureNotes <span class="version-badge">v1.3.0</span></h2>
                 <p class="muted">Private, password-protected notes, encrypted entirely in your browser.</p>
 
                 <h3>Changelog</h3>
                 <ul class="changelog">
+                  <li><strong>v1.3.0</strong> — Added in-app confirm/rename dialogs (no more browser popups), note sorting, pinning, and a Trash with configurable auto-delete; fixed the editor jumping to the top of the page on every keystroke.</li>
                   <li><strong>v1.2.1</strong> — Fixed the notebook "⋯" menu never opening (a CSS/attribute conflict was blocking it), and made it reachable on touchscreens instead of only appearing on hover.</li>
                   <li><strong>v1.2.0</strong> — Moved the theme switcher into the sidebar and made Settings icon-only, sharpened the logo for high-DPI screens, and fixed the note editor not filling the screen and text being hidden behind the bottom safe area on mobile.</li>
-                  <li><strong>v1.1.0</strong> — Redesigned navigation with a foldable sidebar and notebooks, consolidated Settings (now includes Backup and About), a custom logo, and a single unified theme switcher with a refreshed icon set.</li>
                 </ul>
 
                 <h3>A note on security</h3>
@@ -733,6 +794,21 @@
     <div class="popover-menu" id="notebook-context-menu" hidden>
       <button type="button" id="notebook-rename-btn"><span class="icon icon-sm" data-icon="pencil"></span>Rename</button>
       <button type="button" id="notebook-delete-btn" class="danger"><span class="icon icon-sm" data-icon="trash"></span>Delete</button>
+    </div>
+
+    <!-- In-app confirm/prompt dialog, used everywhere instead of the browser's
+         own confirm()/prompt() popups (which show as an unstyled "the page at
+         file:// says" box). -->
+    <div class="modal-overlay hidden" id="modal-overlay">
+      <div class="modal-box" id="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <h2 id="modal-title"></h2>
+        <p id="modal-message" class="muted hidden"></p>
+        <input type="text" id="modal-input" class="hidden" aria-label="Input">
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" id="modal-cancel-btn">Cancel</button>
+          <button type="button" class="btn btn-accent" id="modal-confirm-btn">OK</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -781,7 +857,10 @@
     backArrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="14.5 5.5 8 12 14.5 18.5"/></svg>',
     warning: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 L21 19 H3 Z"/><line x1="12" y1="10" x2="12" y2="14.2"/><circle cx="12" cy="16.6" r="0.9" fill="currentColor" stroke="none"/></svg>',
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polyline points="4.5 12.5 9.5 17.5 19.5 6.5"/></svg>',
-    pencil: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 L4 16.2 L15.2 5 L19 8.8 L7.8 20 Z"/><line x1="13" y1="7" x2="17" y2="10.8"/></svg>'
+    pencil: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 L4 16.2 L15.2 5 L19 8.8 L7.8 20 Z"/><line x1="13" y1="7" x2="17" y2="10.8"/></svg>',
+    pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4.2"/><line x1="12" y1="12.2" x2="12" y2="20.5"/></svg>',
+    pinFilled: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4.2"/><line x1="12" y1="12.2" x2="12" y2="20.5"/></svg>',
+    restore: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 10.5 V20 H19.5 V10.5"/><line x1="12" y1="17" x2="12" y2="6"/><polyline points="8 10 12 6 16 10"/></svg>'
   };
 
   // Drawn on a 256x256 internal grid (4x the original) with geometricPrecision
@@ -980,7 +1059,7 @@
     currentView: 'home',           // 'home' | 'settings'
     sidebarOpen: true,
     searchQuery: '',
-    settings: { autoLockMinutes: 5, theme: 'auto' },
+    settings: { autoLockMinutes: 5, theme: 'auto', sortBy: 'newest', trashRetentionDays: 30 },
     dirty: false,
     saveTimer: null,
     autoLockTimeoutId: null
@@ -1024,7 +1103,10 @@
   var homeOverviewEl = document.getElementById('home-overview');
   var overviewTitleEl = document.getElementById('overview-title');
   var overviewCountEl = document.getElementById('overview-count');
+  var sortSelectEl = document.getElementById('sort-select');
+  var sortPickerWrapperEl = document.getElementById('sort-picker-wrapper');
   var newNoteBtnHome = document.getElementById('new-note-btn-home');
+  var emptyTrashBtn = document.getElementById('empty-trash-btn');
   var notesRowsEl = document.getElementById('notes-rows');
   var notesEmptyStateEl = document.getElementById('notes-empty-state');
   var emptyStateTextEl = document.getElementById('empty-state-text');
@@ -1034,6 +1116,8 @@
   var editorContentEl = document.getElementById('editor-content');
   var backToOverviewBtn = document.getElementById('back-to-overview-btn');
   var backLabelEl = document.getElementById('back-label');
+  var pinNoteBtn = document.getElementById('pin-note-btn');
+  var pinNoteIconEl = document.getElementById('pin-note-icon');
   var noteNotebookSelect = document.getElementById('note-notebook-select');
   var saveIndicatorEl = document.getElementById('save-indicator');
   var deleteNoteBtn = document.getElementById('delete-note-btn');
@@ -1047,12 +1131,20 @@
   var importBtn = document.getElementById('import-btn');
   var importStatusEl = document.getElementById('import-status');
   var autolockInput = document.getElementById('autolock-input');
+  var trashRetentionInput = document.getElementById('trash-retention-input');
   var changePasswordForm = document.getElementById('change-password-form');
   var currentPasswordInput = document.getElementById('current-password-input');
   var newPasswordInput = document.getElementById('new-password-input');
   var confirmNewPasswordInput = document.getElementById('confirm-new-password-input');
   var changePasswordStatusEl = document.getElementById('change-password-status');
   var resetAppBtn = document.getElementById('reset-app-btn');
+
+  var modalOverlayEl = document.getElementById('modal-overlay');
+  var modalTitleEl = document.getElementById('modal-title');
+  var modalMessageEl = document.getElementById('modal-message');
+  var modalInputEl = document.getElementById('modal-input');
+  var modalConfirmBtn = document.getElementById('modal-confirm-btn');
+  var modalCancelBtn = document.getElementById('modal-cancel-btn');
 
   /* ============================== SMALL HELPERS ============================== */
 
@@ -1094,8 +1186,9 @@
     return null;
   }
   function getNotesForNotebook(notebookId) {
-    if (notebookId === 'all') return state.notes.slice();
-    return state.notes.filter(function (n) { return (n.notebookId || null) === notebookId; });
+    if (notebookId === 'trash') return state.notes.filter(function (n) { return !!n.trashedAt; });
+    if (notebookId === 'all') return state.notes.filter(function (n) { return !n.trashedAt; });
+    return state.notes.filter(function (n) { return !n.trashedAt && (n.notebookId || null) === notebookId; });
   }
   function isMobileViewport() { return window.matchMedia('(max-width: 768px)').matches; }
 
@@ -1174,6 +1267,86 @@
   document.addEventListener('click', closeAllPopovers);
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAllPopovers(); });
 
+  /* ==========================================================================
+     IN-APP MODAL DIALOG
+     ------------------------------------------------------------------------
+     Replaces window.confirm()/window.prompt() everywhere in the app (those
+     show as an unstyled, browser-chrome "the page at file:// says" popup).
+     openModalDialog() returns a Promise so call sites can stay in the same
+     .then()-based style used throughout the rest of the app; showConfirm()
+     resolves to true/false, showPrompt() resolves to a string or null (if
+     cancelled), matching the semantics of the native functions they replace.
+     ========================================================================== */
+
+  function openModalDialog(opts) {
+    return new Promise(function (resolve) {
+      modalTitleEl.textContent = opts.title || '';
+      if (opts.message) { modalMessageEl.textContent = opts.message; modalMessageEl.classList.remove('hidden'); }
+      else { modalMessageEl.classList.add('hidden'); }
+
+      if (opts.inputMode) {
+        modalInputEl.classList.remove('hidden');
+        modalInputEl.value = opts.inputValue || '';
+        modalInputEl.placeholder = opts.inputPlaceholder || '';
+      } else {
+        modalInputEl.classList.add('hidden');
+      }
+
+      modalConfirmBtn.textContent = opts.confirmLabel || 'OK';
+      modalConfirmBtn.classList.toggle('btn-danger', !!opts.danger);
+      modalConfirmBtn.classList.toggle('btn-accent', !opts.danger);
+      modalCancelBtn.textContent = opts.cancelLabel || 'Cancel';
+
+      modalOverlayEl.classList.remove('hidden');
+
+      function finish(result) {
+        modalOverlayEl.classList.add('hidden');
+        modalConfirmBtn.removeEventListener('click', onConfirmClick);
+        modalCancelBtn.removeEventListener('click', onCancelClick);
+        modalOverlayEl.removeEventListener('mousedown', onOverlayMouseDown);
+        document.removeEventListener('keydown', onKeyDown);
+        resolve(result);
+      }
+      function onConfirmClick() { finish(opts.inputMode ? modalInputEl.value : true); }
+      function onCancelClick() { finish(opts.inputMode ? null : false); }
+      function onOverlayMouseDown(e) { if (e.target === modalOverlayEl) onCancelClick(); }
+      function onKeyDown(e) {
+        if (e.key === 'Escape') { e.preventDefault(); onCancelClick(); }
+        else if (e.key === 'Enter') { e.preventDefault(); onConfirmClick(); }
+      }
+
+      modalConfirmBtn.addEventListener('click', onConfirmClick);
+      modalCancelBtn.addEventListener('click', onCancelClick);
+      modalOverlayEl.addEventListener('mousedown', onOverlayMouseDown);
+      document.addEventListener('keydown', onKeyDown);
+
+      setTimeout(function () {
+        if (opts.inputMode) { modalInputEl.focus(); modalInputEl.select(); }
+        else { modalConfirmBtn.focus(); }
+      }, 30);
+    });
+  }
+
+  // Resolves true (confirmed) or false (cancelled/dismissed).
+  function showConfirm(title, message, opts) {
+    opts = opts || {};
+    return openModalDialog({
+      title: title, message: message, inputMode: false,
+      confirmLabel: opts.confirmLabel || 'OK',
+      cancelLabel: opts.cancelLabel || 'Cancel',
+      danger: !!opts.danger
+    });
+  }
+
+  // Resolves the entered string, or null if cancelled -- same contract as
+  // window.prompt().
+  function showPrompt(title, placeholder, initialValue) {
+    return openModalDialog({
+      title: title, inputMode: true, inputPlaceholder: placeholder, inputValue: initialValue,
+      confirmLabel: 'Save', cancelLabel: 'Cancel'
+    });
+  }
+
   /* ============================== SIDEBAR FOLD ============================== */
 
   function applySidebarState() {
@@ -1211,7 +1384,10 @@
     homeViewEl.hidden = view !== 'home';
     settingsViewEl.hidden = view !== 'settings';
     settingsNavBtn.classList.toggle('active', view === 'settings');
-    if (view === 'settings') autolockInput.value = state.settings.autoLockMinutes || 5;
+    if (view === 'settings') {
+      autolockInput.value = state.settings.autoLockMinutes || 5;
+      trashRetentionInput.value = (state.settings.trashRetentionDays != null) ? state.settings.trashRetentionDays : 30;
+    }
     renderSidebarTree();
   }
 
@@ -1231,9 +1407,24 @@
     allLabel.textContent = 'All Notes';
     var allCount = document.createElement('span');
     allCount.className = 'tree-count';
-    allCount.textContent = state.notes.length;
+    allCount.textContent = getNotesForNotebook('all').length;
     allRow.appendChild(allIcon); allRow.appendChild(allLabel); allRow.appendChild(allCount);
     sidebarTreeEl.appendChild(allRow);
+
+    var trashCountVal = getNotesForNotebook('trash').length;
+    var trashRow = document.createElement('div');
+    trashRow.className = 'tree-item trash-notes-row' + (state.activeNotebookId === 'trash' && state.currentView === 'home' ? ' active' : '');
+    var trashIcon = document.createElement('span');
+    trashIcon.className = 'tree-icon';
+    trashIcon.innerHTML = iconMarkup('trash');
+    var trashLabel = document.createElement('span');
+    trashLabel.className = 'tree-label';
+    trashLabel.textContent = 'Trash';
+    var trashCountEl = document.createElement('span');
+    trashCountEl.className = 'tree-count';
+    trashCountEl.textContent = trashCountVal;
+    trashRow.appendChild(trashIcon); trashRow.appendChild(trashLabel); trashRow.appendChild(trashCountEl);
+    sidebarTreeEl.appendChild(trashRow);
 
     var sortedNotebooks = state.notebooks.slice().sort(function (a, b) { return a.name.localeCompare(b.name); });
     sortedNotebooks.forEach(function (nb) {
@@ -1320,6 +1511,9 @@
     var allNotesRow = e.target.closest('.all-notes-row');
     if (allNotesRow) { selectNotebook('all'); return; }
 
+    var trashRowEl = e.target.closest('.trash-notes-row');
+    if (trashRowEl) { selectNotebook('trash'); return; }
+
     var notebookRow = e.target.closest('.notebook-row');
     if (notebookRow) { selectNotebook(notebookRow.dataset.id); return; }
   });
@@ -1333,7 +1527,7 @@
   function selectNotebook(id) {
     flushPendingSaveIfAny();
     state.activeNotebookId = id;
-    if (id !== 'all') state.expandedNotebookIds.add(id);
+    if (id !== 'all' && id !== 'trash') state.expandedNotebookIds.add(id);
     deselectNoteInternal();
     switchMainView('home');
     renderHomeOverview();
@@ -1383,17 +1577,18 @@
   }
 
   function createNewNotebook() {
-    var name = window.prompt('Notebook name');
-    if (name === null) return;
-    var trimmed = name.trim();
-    if (!trimmed) return;
-    var now = Date.now();
-    var nb = { id: generateId(), name: trimmed.slice(0, 120), createdAt: now, updatedAt: now };
-    state.notebooks.push(nb);
-    persistNotebook(nb).then(function () {
-      state.expandedNotebookIds.add(nb.id);
-      populateNotebookSelect();
-      selectNotebook(nb.id);
+    showPrompt('New notebook', 'Notebook name').then(function (name) {
+      if (name === null) return;
+      var trimmed = name.trim();
+      if (!trimmed) return;
+      var now = Date.now();
+      var nb = { id: generateId(), name: trimmed.slice(0, 120), createdAt: now, updatedAt: now };
+      state.notebooks.push(nb);
+      persistNotebook(nb).then(function () {
+        state.expandedNotebookIds.add(nb.id);
+        populateNotebookSelect();
+        selectNotebook(nb.id);
+      });
     });
   }
 
@@ -1402,16 +1597,17 @@
     var nb = findNotebook(id);
     closeAllPopovers();
     if (!nb) return;
-    var newName = window.prompt('Rename notebook', nb.name);
-    if (newName === null) return;
-    var trimmed = newName.trim();
-    if (!trimmed) return;
-    nb.name = trimmed.slice(0, 120);
-    nb.updatedAt = Date.now();
-    persistNotebook(nb).then(function () {
-      renderSidebarTree();
-      if (state.activeNotebookId === id) overviewTitleEl.textContent = nb.name;
-      populateNotebookSelect();
+    showPrompt('Rename notebook', 'Notebook name', nb.name).then(function (newName) {
+      if (newName === null) return;
+      var trimmed = newName.trim();
+      if (!trimmed) return;
+      nb.name = trimmed.slice(0, 120);
+      nb.updatedAt = Date.now();
+      persistNotebook(nb).then(function () {
+        renderSidebarTree();
+        if (state.activeNotebookId === id) overviewTitleEl.textContent = nb.name;
+        populateNotebookSelect();
+      });
     });
   }
 
@@ -1421,47 +1617,88 @@
     closeAllPopovers();
     if (!nb) return;
     var count = getNotesForNotebook(id).length;
-    var msg = 'Delete notebook "' + nb.name + '"? ' +
+    var msg = '"' + nb.name + '" will be deleted. ' +
       (count > 0 ? (count + ' note(s) inside will move to All Notes, not be deleted. ') : '') +
       'This cannot be undone.';
-    if (!window.confirm(msg)) return;
+    showConfirm('Delete notebook?', msg, { confirmLabel: 'Delete', danger: true }).then(function (confirmed) {
+      if (!confirmed) return;
 
-    var reassignPromises = [];
-    state.notes.forEach(function (n) {
-      if ((n.notebookId || null) === id) {
-        n.notebookId = null;
-        reassignPromises.push(persistNote(n));
-      }
-    });
-    state.notebooks = state.notebooks.filter(function (n) { return n.id !== id; });
-    delete notebookCipherCache[id];
-    state.expandedNotebookIds.delete(id);
+      var reassignPromises = [];
+      state.notes.forEach(function (n) {
+        if ((n.notebookId || null) === id) {
+          n.notebookId = null;
+          reassignPromises.push(persistNote(n));
+        }
+      });
+      state.notebooks = state.notebooks.filter(function (n) { return n.id !== id; });
+      delete notebookCipherCache[id];
+      state.expandedNotebookIds.delete(id);
 
-    Promise.all(reassignPromises).then(function () {
-      if (state.activeNotebookId === id) { selectNotebook('all'); }
-      else { renderSidebarTree(); renderHomeOverview(); }
-      writeVaultToStorage();
-      populateNotebookSelect();
+      Promise.all(reassignPromises).then(function () {
+        if (state.activeNotebookId === id) { selectNotebook('all'); }
+        else { renderSidebarTree(); renderHomeOverview(); }
+        writeVaultToStorage();
+        populateNotebookSelect();
+      });
     });
   }
 
   /* ============================== HOME OVERVIEW RENDERING ============================== */
 
+  function sortNoteList(list) {
+    var mode = state.settings.sortBy || 'newest';
+    var sorted = list.slice();
+    sorted.sort(function (a, b) {
+      if (mode === 'oldest') return a.updatedAt - b.updatedAt;
+      if (mode === 'title-asc') return (a.title || '').localeCompare(b.title || '');
+      if (mode === 'title-desc') return (b.title || '').localeCompare(a.title || '');
+      return b.updatedAt - a.updatedAt; // newest (default)
+    });
+    return sorted;
+  }
+
+  function appendSectionLabel(text) {
+    var label = document.createElement('div');
+    label.className = 'notes-section-label';
+    label.textContent = text;
+    notesRowsEl.appendChild(label);
+  }
+
   function renderHomeOverview() {
+    if (state.activeNotebookId === 'trash') { renderTrashOverview(); return; }
+
+    sortPickerWrapperEl.classList.remove('hidden');
+    newNoteBtnHome.classList.remove('hidden');
+    emptyTrashBtn.classList.add('hidden');
+    sortSelectEl.value = state.settings.sortBy || 'newest';
+
     var notebook = state.activeNotebookId !== 'all' ? findNotebook(state.activeNotebookId) : null;
     overviewTitleEl.textContent = notebook ? notebook.name : 'All Notes';
 
     var q = state.searchQuery.trim().toLowerCase();
     var scoped = getNotesForNotebook(state.activeNotebookId);
-    var list = scoped.filter(function (n) {
+    var matching = scoped.filter(function (n) {
       return !q || n.title.toLowerCase().indexOf(q) !== -1 || n.body.toLowerCase().indexOf(q) !== -1;
-    }).sort(function (a, b) { return b.updatedAt - a.updatedAt; });
+    });
 
-    overviewCountEl.textContent = list.length + (list.length === 1 ? ' note' : ' notes');
+    var pinnedList = sortNoteList(matching.filter(function (n) { return n.pinned; }));
+    var restList = sortNoteList(matching.filter(function (n) { return !n.pinned; }));
+
+    overviewCountEl.textContent = matching.length + (matching.length === 1 ? ' note' : ' notes');
 
     notesRowsEl.innerHTML = '';
     homeRowElements = {};
-    list.forEach(function (note) {
+
+    if (pinnedList.length > 0) {
+      appendSectionLabel('Pinned');
+      pinnedList.forEach(function (note) {
+        var row = createHomeRowElement(note);
+        notesRowsEl.appendChild(row);
+        homeRowElements[note.id] = row;
+      });
+      if (restList.length > 0) appendSectionLabel('Others');
+    }
+    restList.forEach(function (note) {
       var row = createHomeRowElement(note);
       notesRowsEl.appendChild(row);
       homeRowElements[note.id] = row;
@@ -1472,10 +1709,35 @@
       notesRowsEl.hidden = true;
       noResultsEl.hidden = true;
       emptyStateTextEl.textContent = notebook ? ('No notes in "' + notebook.name + '" yet.') : 'No notes yet.';
-    } else if (list.length === 0) {
+    } else if (matching.length === 0) {
       notesEmptyStateEl.hidden = true;
       notesRowsEl.hidden = true;
       noResultsEl.hidden = false;
+    } else {
+      notesEmptyStateEl.hidden = true;
+      notesRowsEl.hidden = false;
+      noResultsEl.hidden = true;
+    }
+  }
+
+  function renderTrashOverview() {
+    sortPickerWrapperEl.classList.add('hidden');
+    newNoteBtnHome.classList.add('hidden');
+    emptyTrashBtn.classList.remove('hidden');
+    overviewTitleEl.textContent = 'Trash';
+
+    var list = getNotesForNotebook('trash').sort(function (a, b) { return (b.trashedAt || 0) - (a.trashedAt || 0); });
+    overviewCountEl.textContent = list.length + (list.length === 1 ? ' note' : ' notes');
+
+    notesRowsEl.innerHTML = '';
+    homeRowElements = {};
+    list.forEach(function (note) { notesRowsEl.appendChild(createTrashRowElement(note)); });
+
+    if (list.length === 0) {
+      notesEmptyStateEl.hidden = false;
+      notesRowsEl.hidden = true;
+      noResultsEl.hidden = true;
+      emptyStateTextEl.textContent = 'Trash is empty.';
     } else {
       notesEmptyStateEl.hidden = true;
       notesRowsEl.hidden = false;
@@ -1490,13 +1752,22 @@
 
     var top = document.createElement('div');
     top.className = 'note-row-top';
+
+    var pinBtn = document.createElement('button');
+    pinBtn.type = 'button';
+    pinBtn.className = 'row-pin-btn' + (note.pinned ? ' pinned' : '');
+    pinBtn.title = note.pinned ? 'Unpin' : 'Pin';
+    pinBtn.setAttribute('aria-label', note.pinned ? 'Unpin note' : 'Pin note');
+    pinBtn.innerHTML = iconMarkup(note.pinned ? 'pinFilled' : 'pin');
+    pinBtn.addEventListener('click', function (e) { e.stopPropagation(); togglePinNote(note); });
+
     var title = document.createElement('span');
     title.className = 'note-row-title';
     title.textContent = note.title.trim() || 'Untitled';
     var time = document.createElement('span');
     time.className = 'note-row-time';
     time.textContent = formatRelativeTime(note.updatedAt);
-    top.appendChild(title); top.appendChild(time);
+    top.appendChild(pinBtn); top.appendChild(title); top.appendChild(time);
 
     var snip = document.createElement('div');
     snip.className = 'note-row-snippet';
@@ -1507,20 +1778,68 @@
     return row;
   }
 
+  function createTrashRowElement(note) {
+    var row = document.createElement('div');
+    row.className = 'note-row trash-row' + (note._corrupted ? ' corrupted' : '');
+
+    var top = document.createElement('div');
+    top.className = 'note-row-top';
+    var title = document.createElement('span');
+    title.className = 'note-row-title';
+    title.textContent = note.title.trim() || 'Untitled';
+    var time = document.createElement('span');
+    time.className = 'note-row-time';
+    time.textContent = 'Deleted ' + formatRelativeTime(note.trashedAt);
+    top.appendChild(title); top.appendChild(time);
+
+    var snip = document.createElement('div');
+    snip.className = 'note-row-snippet';
+    snip.textContent = snippet(note.body, 140);
+
+    var actions = document.createElement('div');
+    actions.className = 'trash-row-actions';
+
+    var restoreBtn = document.createElement('button');
+    restoreBtn.type = 'button';
+    restoreBtn.className = 'btn btn-outline btn-sm';
+    var restoreIcon = document.createElement('span');
+    restoreIcon.className = 'icon icon-sm';
+    restoreIcon.innerHTML = iconMarkup('restore');
+    restoreBtn.appendChild(restoreIcon);
+    restoreBtn.appendChild(document.createTextNode('Restore'));
+    restoreBtn.addEventListener('click', function (e) { e.stopPropagation(); restoreNote(note.id); });
+
+    var deleteForeverBtn = document.createElement('button');
+    deleteForeverBtn.type = 'button';
+    deleteForeverBtn.className = 'btn btn-danger-ghost btn-sm';
+    var trashIcon = document.createElement('span');
+    trashIcon.className = 'icon icon-sm';
+    trashIcon.innerHTML = iconMarkup('trash');
+    deleteForeverBtn.appendChild(trashIcon);
+    deleteForeverBtn.appendChild(document.createTextNode('Delete forever'));
+    deleteForeverBtn.addEventListener('click', function (e) { e.stopPropagation(); permanentlyDeleteNote(note.id); });
+
+    actions.appendChild(restoreBtn);
+    actions.appendChild(deleteForeverBtn);
+
+    row.appendChild(top); row.appendChild(snip); row.appendChild(actions);
+    return row;
+  }
+
   // Patches the home row + sidebar nested entry for one note in place,
-  // instead of rebuilding either list, so typing stays responsive even
-  // with many/long notes. opts.moveToTop is set once a save completes
-  // (the note's updatedAt changed, so its position may need to change too).
-  function syncNoteUI(note, opts) {
-    opts = opts || {};
+  // instead of rebuilding either list, so typing stays responsive even with
+  // many/long notes. It deliberately does NOT reposition the row -- with
+  // Pinned/Others sections in play, re-sorting mid-edit would fight the
+  // grouping and could feel like the list is jumping under the user's
+  // cursor. The overview re-sorts naturally the next time it's rendered
+  // (e.g. via Back, or navigating notebooks).
+  function syncNoteUI(note) {
     var row = homeRowElements[note.id];
     if (row) {
       row.querySelector('.note-row-title').textContent = note.title.trim() || 'Untitled';
       row.querySelector('.note-row-snippet').textContent = snippet(note.body, 140);
-      if (opts.moveToTop) {
-        row.querySelector('.note-row-time').textContent = formatRelativeTime(note.updatedAt);
-        if (notesRowsEl.firstChild !== row) notesRowsEl.insertBefore(row, notesRowsEl.firstChild);
-      }
+      var timeEl = row.querySelector('.note-row-time');
+      if (timeEl) timeEl.textContent = formatRelativeTime(note.updatedAt);
     }
     var navEntry = sidebarNoteElements[note.id];
     if (navEntry) navEntry.textContent = note.title.trim() || 'Untitled';
@@ -1546,16 +1865,40 @@
   // only thing that ever scrolls. That combination is what keeps the very
   // end of a long note from ending up clipped inside a nested scrollbar
   // that a mobile keyboard can hide part of.
+  // The body textarea has no CSS height of its own beyond a small baseline
+  // (see .note-body-input) -- these two functions size it instead, so a
+  // short/empty note still fills the screen, a long note grows to fit all
+  // of its content, and .editor-body (the single scroll container) is the
+  // only thing that ever scrolls. That combination is what keeps the very
+  // end of a long note from ending up clipped inside a nested scrollbar
+  // that a mobile keyboard can hide part of.
+  //
+  // autoGrowTextarea briefly collapses the element to height:auto in order
+  // to measure scrollHeight. That collapse temporarily shrinks the total
+  // scrollable content of .editor-body, and the browser can respond by
+  // clamping its scrollTop back near 0 -- which is what caused the page to
+  // visibly jump to the top on every keystroke. Saving and restoring
+  // scrollTop around the resize cancels that out.
+  function withPreservedScroll(el, fn) {
+    var scrollParent = el.closest('.editor-body');
+    var savedScrollTop = scrollParent ? scrollParent.scrollTop : null;
+    fn();
+    if (scrollParent && savedScrollTop !== null) scrollParent.scrollTop = savedScrollTop;
+  }
   function fitTextareaToViewport(el) {
     var wrapper = el.closest('.editor-body');
     if (!wrapper) return;
-    var titleHeight = noteTitleInput.offsetHeight + 6;
-    var available = wrapper.clientHeight - titleHeight;
-    el.style.minHeight = Math.max(available, 200) + 'px';
+    withPreservedScroll(el, function () {
+      var titleHeight = noteTitleInput.offsetHeight + 6;
+      var available = wrapper.clientHeight - titleHeight;
+      el.style.minHeight = Math.max(available, 200) + 'px';
+    });
   }
   function autoGrowTextarea(el) {
-    el.style.height = 'auto';
-    el.style.height = el.scrollHeight + 'px';
+    withPreservedScroll(el, function () {
+      el.style.height = 'auto';
+      el.style.height = el.scrollHeight + 'px';
+    });
   }
   function refreshActiveTextareaSize() {
     if (state.activeNoteId && !editorContentEl.classList.contains('hidden')) {
@@ -1575,6 +1918,7 @@
     noteTitleInput.value = note.title;
     noteBodyInput.value = note.body;
     noteNotebookSelect.value = note.notebookId || '';
+    updatePinButtonUI(note);
     setSaveIndicator('idle');
     updateBackLabel();
     renderSidebarTree();
@@ -1587,8 +1931,8 @@
   function createNewNote() {
     flushPendingSaveIfAny();
     var now = Date.now();
-    var notebookId = state.activeNotebookId !== 'all' ? state.activeNotebookId : null;
-    var note = { id: generateId(), title: '', body: '', notebookId: notebookId, createdAt: now, updatedAt: now };
+    var notebookId = (state.activeNotebookId !== 'all' && state.activeNotebookId !== 'trash') ? state.activeNotebookId : null;
+    var note = { id: generateId(), title: '', body: '', notebookId: notebookId, pinned: false, trashedAt: null, createdAt: now, updatedAt: now };
     state.notes.push(note);
     persistNote(note).then(function () {
       renderSidebarTree();
@@ -1598,18 +1942,98 @@
     });
   }
 
+  // Human-readable reminder of what happens to a note once it's trashed,
+  // shown in the confirm dialog so the retention setting is never a surprise.
+  function trashRetentionMessage() {
+    var days = state.settings.trashRetentionDays;
+    if (!days || days <= 0) return "You can restore it from Trash any time — it won't be deleted automatically.";
+    return 'You can restore it from Trash within ' + days + ' day' + (days === 1 ? '' : 's') + ', after which it will be permanently deleted.';
+  }
+
+  function updatePinButtonUI(note) {
+    pinNoteIconEl.innerHTML = iconMarkup(note.pinned ? 'pinFilled' : 'pin');
+    pinNoteBtn.classList.toggle('active', !!note.pinned);
+    pinNoteBtn.title = note.pinned ? 'Unpin note' : 'Pin note';
+    pinNoteBtn.setAttribute('aria-label', note.pinned ? 'Unpin note' : 'Pin note');
+  }
+
+  function togglePinNote(note) {
+    note.pinned = !note.pinned;
+    persistNote(note).then(function () {
+      if (state.activeNoteId === note.id) updatePinButtonUI(note);
+      renderHomeOverview();
+    });
+  }
+
+  // Soft-delete: moves the note to Trash instead of erasing it immediately.
+  // It's permanently removed either manually from Trash or automatically
+  // after the configured retention period (see purgeExpiredTrash).
   function deleteActiveNote() {
     if (!state.activeNoteId) return;
-    if (!window.confirm('Delete this note? This cannot be undone.')) return;
-    var id = state.activeNoteId;
-    state.notes = state.notes.filter(function (n) { return n.id !== id; });
-    delete noteCipherCache[id];
-    writeVaultToStorage();
-    clearTimeout(state.saveTimer);
-    state.dirty = false;
-    deselectNoteInternal();
-    renderSidebarTree();
-    renderHomeOverview();
+    var note = findNote(state.activeNoteId);
+    if (!note) return;
+    showConfirm('Move to Trash?', 'This note will be moved to Trash. ' + trashRetentionMessage(), { confirmLabel: 'Move to Trash', danger: true }).then(function (confirmed) {
+      if (!confirmed) return;
+      note.trashedAt = Date.now();
+      persistNote(note).then(function () {
+        clearTimeout(state.saveTimer);
+        state.dirty = false;
+        deselectNoteInternal();
+        renderSidebarTree();
+        renderHomeOverview();
+      });
+    });
+  }
+
+  function restoreNote(id) {
+    var note = findNote(id);
+    if (!note) return;
+    note.trashedAt = null;
+    persistNote(note).then(function () {
+      renderSidebarTree();
+      renderHomeOverview();
+    });
+  }
+
+  function permanentlyDeleteNote(id) {
+    var note = findNote(id);
+    if (!note) return;
+    showConfirm('Delete forever?', 'This note will be permanently deleted. This cannot be undone.', { confirmLabel: 'Delete forever', danger: true }).then(function (confirmed) {
+      if (!confirmed) return;
+      state.notes = state.notes.filter(function (n) { return n.id !== id; });
+      delete noteCipherCache[id];
+      writeVaultToStorage();
+      renderSidebarTree();
+      renderHomeOverview();
+    });
+  }
+
+  function emptyTrash() {
+    var trashed = getNotesForNotebook('trash');
+    if (trashed.length === 0) return;
+    showConfirm('Empty Trash?', 'This will permanently delete ' + trashed.length + ' note' + (trashed.length === 1 ? '' : 's') + ' in Trash. This cannot be undone.', { confirmLabel: 'Empty Trash', danger: true }).then(function (confirmed) {
+      if (!confirmed) return;
+      var trashedIds = trashed.map(function (n) { return n.id; });
+      trashedIds.forEach(function (id) { delete noteCipherCache[id]; });
+      state.notes = state.notes.filter(function (n) { return trashedIds.indexOf(n.id) === -1; });
+      writeVaultToStorage();
+      renderSidebarTree();
+      renderHomeOverview();
+    });
+  }
+
+  // Runs once per unlock: permanently removes any trashed note whose
+  // retention period has elapsed. A retention of 0 means "keep forever".
+  function purgeExpiredTrash() {
+    var days = state.settings.trashRetentionDays;
+    if (!days || days <= 0) return;
+    var cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+    var before = state.notes.length;
+    state.notes = state.notes.filter(function (n) {
+      if (n.trashedAt && n.trashedAt < cutoff) { delete noteCipherCache[n.id]; return false; }
+      return true;
+    });
+    if (state.notes.length !== before) writeVaultToStorage();
   }
 
   function onEditorInput() {
@@ -1618,7 +2042,7 @@
     note.title = noteTitleInput.value;
     note.body = noteBodyInput.value;
     state.dirty = true;
-    syncNoteUI(note, {});
+    syncNoteUI(note);
     autoGrowTextarea(noteBodyInput);
     setSaveIndicator('editing');
     clearTimeout(state.saveTimer);
@@ -1661,7 +2085,11 @@
   /* ============================== PERSISTENCE ============================== */
 
   function persistNote(note) {
-    var payload = { title: note.title, body: note.body, notebookId: note.notebookId || null, createdAt: note.createdAt, updatedAt: note.updatedAt };
+    var payload = {
+      title: note.title, body: note.body, notebookId: note.notebookId || null,
+      pinned: !!note.pinned, trashedAt: note.trashedAt || null,
+      createdAt: note.createdAt, updatedAt: note.updatedAt
+    };
     return CryptoService.encryptJSON(state.cryptoKey, payload).then(function (enc) {
       noteCipherCache[note.id] = enc;
       writeVaultToStorage();
@@ -1698,7 +2126,7 @@
     note.updatedAt = Date.now();
     return persistNote(note).then(function () {
       state.dirty = false;
-      syncNoteUI(note, { moveToTop: true });
+      syncNoteUI(note);
       setSaveIndicator('saved');
     }).catch(function (err) {
       console.error('Save failed', err);
@@ -1764,6 +2192,8 @@
     state.sidebarOpen = !isMobileViewport();
     applySidebarState();
 
+    purgeExpiredTrash();
+
     showApp();
     deselectNoteInternal();
     populateNotebookSelect();
@@ -1792,7 +2222,7 @@
           verifier: verifier,
           notebooks: [],
           notes: [],
-          settings: { autoLockMinutes: 5, theme: state.settings.theme || 'auto' }
+          settings: { autoLockMinutes: 5, theme: state.settings.theme || 'auto', sortBy: 'newest', trashRetentionDays: 30 }
         };
         StorageService.save(vault);
 
@@ -1845,6 +2275,8 @@
             title: payload.title || '',
             body: payload.body || '',
             notebookId: payload.notebookId || null,
+            pinned: !!payload.pinned,
+            trashedAt: payload.trashedAt || null,
             createdAt: payload.createdAt || 0,
             updatedAt: payload.updatedAt || 0
           });
@@ -1854,6 +2286,8 @@
             title: '⚠ Corrupted note',
             body: 'This note could not be decrypted. It may have been corrupted or tampered with. You can delete it, or start typing to replace it with fresh, correctly-encrypted content.',
             notebookId: null,
+            pinned: false,
+            trashedAt: null,
             createdAt: 0,
             updatedAt: 0,
             _corrupted: true
@@ -1880,7 +2314,7 @@
         state.vaultMeta = { kdf: vault.kdf, verifier: vault.verifier };
         state.notes = decryptedNotes;
         state.notebooks = decryptedNotebooks;
-        state.settings = Object.assign({ autoLockMinutes: 5, theme: 'auto' }, vault.settings);
+        state.settings = Object.assign({ autoLockMinutes: 5, theme: 'auto', sortBy: 'newest', trashRetentionDays: 30 }, vault.settings);
         state.unlocked = true;
 
         unlockPasswordInput.value = '';
@@ -1892,10 +2326,11 @@
   }
 
   function eraseAllData() {
-    var ok = window.confirm('This will permanently erase all notes, notebooks, and settings, and reset SecureNotes on this device. This cannot be undone. Continue?');
-    if (!ok) return;
-    StorageService.clear();
-    location.reload();
+    showConfirm('Erase all data?', 'This will permanently erase all notes, notebooks, and settings, and reset SecureNotes on this device. This cannot be undone.', { confirmLabel: 'Erase everything', danger: true }).then(function (confirmed) {
+      if (!confirmed) return;
+      StorageService.clear();
+      location.reload();
+    });
   }
 
   /* ============================== SETTINGS ACTIONS ============================== */
@@ -1908,6 +2343,15 @@
     state.settings.autoLockMinutes = val;
     writeVaultToStorage();
     resetAutoLockTimer();
+  }
+
+  function handleTrashRetentionChange() {
+    var val = parseInt(trashRetentionInput.value, 10);
+    if (isNaN(val) || val < 0) val = 0;
+    if (val > 365) val = 365;
+    trashRetentionInput.value = val;
+    state.settings.trashRetentionDays = val;
+    writeVaultToStorage();
   }
 
   function handleChangePasswordSubmit(e) {
@@ -1930,7 +2374,11 @@
       return CryptoService.deriveKey(next, newSalt, PBKDF2_ITERATIONS).then(function (newKey) {
         return CryptoService.encryptJSON(newKey, { check: VERIFIER_CHECK_VALUE }).then(function (newVerifier) {
           var notePromises = state.notes.map(function (note) {
-            var payload = { title: note.title, body: note.body, notebookId: note.notebookId || null, createdAt: note.createdAt, updatedAt: note.updatedAt };
+            var payload = {
+              title: note.title, body: note.body, notebookId: note.notebookId || null,
+              pinned: !!note.pinned, trashedAt: note.trashedAt || null,
+              createdAt: note.createdAt, updatedAt: note.updatedAt
+            };
             return CryptoService.encryptJSON(newKey, payload).then(function (enc) { noteCipherCache[note.id] = enc; });
           });
           var notebookPromises = state.notebooks.map(function (nb) {
@@ -1988,20 +2436,20 @@
       }
 
       var noteCount = data.notes.length;
-      var ok = window.confirm(
-        'Import this backup? It contains ' + noteCount + ' note(s) and will replace everything currently ' +
+      var message = 'It contains ' + noteCount + ' note(s) and will replace everything currently ' +
         "stored in this browser. You'll need the password that was active when this backup was made. " +
-        'This cannot be undone.'
-      );
-      if (!ok) return;
+        'This cannot be undone.';
+      showConfirm('Import this backup?', message, { confirmLabel: 'Import', danger: true }).then(function (confirmed) {
+        if (!confirmed) return;
 
-      var migrated = migrateVault(data);
-      StorageService.save(migrated);
-      applyThemeToDOM((migrated.settings && migrated.settings.theme) || 'auto');
-      lockNow().then(function () {
-        showStatus(unlockStatusEl, 'Backup imported. Enter the password used at the time of that backup.', 'success');
+        var migrated = migrateVault(data);
+        StorageService.save(migrated);
+        applyThemeToDOM((migrated.settings && migrated.settings.theme) || 'auto');
+        lockNow().then(function () {
+          showStatus(unlockStatusEl, 'Backup imported. Enter the password used at the time of that backup.', 'success');
+        });
+        importFileInput.value = '';
       });
-      importFileInput.value = '';
     };
     reader.onerror = function () { showStatus(importStatusEl, 'Could not read that file.', 'error'); };
     reader.readAsText(file);
@@ -2101,6 +2549,11 @@
     notebookDeleteBtn.addEventListener('click', handleNotebookDelete);
 
     deleteNoteBtn.addEventListener('click', deleteActiveNote);
+    pinNoteBtn.addEventListener('click', function () {
+      var note = findNote(state.activeNoteId);
+      if (!note) return;
+      togglePinNote(note);
+    });
     backToOverviewBtn.addEventListener('click', function () {
       flushPendingSaveIfAny();
       deselectNoteInternal();
@@ -2110,6 +2563,13 @@
     noteTitleInput.addEventListener('input', onEditorInput);
     noteBodyInput.addEventListener('input', onEditorInput);
     noteNotebookSelect.addEventListener('change', onNotebookSelectChange);
+
+    sortSelectEl.addEventListener('change', function () {
+      state.settings.sortBy = sortSelectEl.value;
+      writeVaultToStorage();
+      renderHomeOverview();
+    });
+    emptyTrashBtn.addEventListener('click', emptyTrash);
 
     var searchDebounce = null;
     searchInput.addEventListener('input', function () {
@@ -2131,6 +2591,7 @@
     importBtn.addEventListener('click', handleImport);
 
     autolockInput.addEventListener('change', handleAutolockChange);
+    trashRetentionInput.addEventListener('change', handleTrashRetentionChange);
     changePasswordForm.addEventListener('submit', handleChangePasswordSubmit);
     resetAppBtn.addEventListener('click', eraseAllData);
 
@@ -2167,7 +2628,7 @@
 
     var loaded = StorageService.load();
     if (loaded.ok) {
-      state.settings = Object.assign({ autoLockMinutes: 5, theme: 'auto' }, loaded.data.settings);
+      state.settings = Object.assign({ autoLockMinutes: 5, theme: 'auto', sortBy: 'newest', trashRetentionDays: 30 }, loaded.data.settings);
     }
     applyThemeToDOM(state.settings.theme);
 
